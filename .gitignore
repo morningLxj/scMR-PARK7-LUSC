@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+*.venv
+*.env
+
+# R
+.RData
+.Rhistory
+.Rproj.user
+
+# System
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Data (usually large files are not uploaded to git)
+*.gz
+*.zip
+*.csv
+*.tsv
+# Uncomment the below line if you want to ignore all csv/tsv files, or keep them if they are small
+# *.csv
+# *.tsv
