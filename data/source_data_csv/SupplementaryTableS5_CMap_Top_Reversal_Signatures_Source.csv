@@ -1,0 +1,13 @@
+﻿Perturbagen_or_signature,Mechanism_class,Cell_context,Connectivity_score,Direction,Interpretation
+SODIUM/CALCIUM_EXCHANGE_INHIBITOR,MOA_CLASS,PC3,-0.9996,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+ATM_KINASE_INHIBITOR,MOA_CLASS,PC3,-0.9996,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+ATR_KINASE_INHIBITOR,MOA_CLASS,HEK293,-0.9984,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+CALCIUM_CHANNEL_ACTIVATOR,MOA_CLASS,HT29,-0.9982,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+CARCINOGEN,MOA_CLASS,HEPG2,-0.998,Predicted reversal,Unfiltered CMap output; broad/non-therapeutic class; not interpreted as a validated treatment candidate
+INTEGRIN_ANTAGONIST,MOA_CLASS,MCF7,-0.9978,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+CP_DNA_DEPENDENT_PROTEIN_KINASE_INHIBITOR,PCL,A375,-0.9951,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+ATR_KINASE_INHIBITOR,MOA_CLASS,HCC515,-0.9947,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+PKA_INHIBITOR,MOA_CLASS,HAP1,-0.9939,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+CP_PKA_INHIBITOR,PCL,HAP1,-0.9939,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+RNA_POLYMERASE_INHIBITOR,MOA_CLASS,HUVEC,-0.993,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation
+INOSINE_MONOPHOSPHATE_DEHYDROGENASE_INHIBITOR,MOA_CLASS,A375,-0.9911,Predicted reversal,Hypothesis-generating perturbational signature; requires experimental validation

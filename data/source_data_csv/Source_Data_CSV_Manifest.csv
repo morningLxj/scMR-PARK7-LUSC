@@ -1,0 +1,61 @@
+file_name,manuscript_item,current_note
+Figure2_Table1_AllCells_MR_Results.csv,Figure 2 / Table 1,Cell-type-resolved MR results with BH-FDR q values.
+Figure3_Classified_Genetic_Concordance.csv,Figure 3,Classified locus-level genetic concordance source data.
+Figure3_SupplementaryTableS3_Colocalization_SubtypeSpecificity.csv,Supplementary Table S3,Full histology-stratified colocalization source data.
+Figure4_ER_Antioxidant_Scores.csv,Figure 4,Spatial ER/antioxidant score source data.
+Figure4_Spatial_CoLocalization_Scores.csv,Figure 4,Spatial B-cell and antioxidant-high region co-occurrence source data.
+Figure5_InSilicoPerturbation_PARK7_DR_Results.csv,Figure 5,In silico PARK7 perturbation differential-regulatory source data.
+Figure5_InSilicoPerturbation_PARK7_Enrichment.csv,Figure 5,In silico PARK7 perturbation enrichment source data.
+Figure5_CMap_Top_Reversers.csv,Figure 5 / Supplementary Table S5,CMap top reversal signatures.
+Figure5_CMap_Top_Reversers_MOA.csv,Figure 5 / Supplementary Table S5,CMap mechanism-class summary.
+Figure5_CMap_DrugLevel_Top15_HEK293.csv,Figure 5 / Supplementary Table S5,HEK293 CMap drug-level top signatures.
+Figure5_CMap_DrugLevel_Top15_PC3.csv,Figure 5 / Supplementary Table S5,PC3 CMap drug-level top signatures.
+SupplementaryFigureS5_Spatial_Robustness_SampleSummary.csv,Supplementary Fig. S5,Cross-sample spatial robustness source data.
+SupplementaryFigureS6_Hscore_Details_deidentified.csv,Supplementary Fig. S6 / Table S4,De-identified reader-level H-score details.
+SupplementaryTableS1_InSilicoPerturbation_Key_Pathways_Source.csv,Supplementary Table S1,Key in silico perturbation pathway enrichment results.
+SupplementaryTableS2_IHC_Hscore_Summary_Source.csv,Supplementary Table S2,PARK7 IHC H-score summary.
+SupplementaryTableS3_Full_Colocalization_Source.csv,Supplementary Table S3,Full colocalization source table.
+SupplementaryTableS3A_PARK7_Colocalization_BCell_Subtypes_Source.csv,Supplementary Table S3A,B-cell subtype PARK7 colocalization summary.
+SupplementaryTableS4_IHC_Hscore_Details_Deidentified_Source.csv,Supplementary Table S4,De-identified PARK7 IHC H-score details.
+SupplementaryTableS4A_IHC_ReaderAgreement_Source.csv,Supplementary Table S4A,IHC reader-agreement metrics.
+SupplementaryTableS5_CMap_Top_Reversal_Signatures_Source.csv,Supplementary Table S5,CMap top reversal signatures with conservative interpretation.
+SupplementaryTableS6_Public_Datasets_Resources_Source.csv,Supplementary Table S6,Public datasets/resources and access notes.
+Table1_MR_Summary_Source.csv,Table 1,Main MR prioritization table source data.
+SupplementaryTableS1A_PARK7_PerInstrument_F_Statistics.csv,Supplementary Fig. S1 / Supplementary Table S1A,"Per-instrument PARK7 B-cell F-statistics calculated as beta^2/SE^2, with primary LUSC outcome inclusion flag."
+SupplementaryTableS1B_PARK7_Instrument_Strength_Summary.csv,Supplementary Fig. S1 / Supplementary Table S1B,Summary distribution of PARK7 B-cell per-instrument F-statistics.
+SupplementaryTableS3B_PARK7_SMR_HEIDI_Source.csv,Supplementary Table S3,Standard SMR output for PARK7 with HEIDI P value and number of SNPs used in HEIDI.
+SupplementaryTableS1C_PARK7_MR_Sensitivity_Summary.csv,Supplementary Fig. S2 / Supplementary Table S1C,Sensitivity summary for the primary PARK7 intermediate-B-cell MR signal.
+SupplementaryTableS1D_PARK7_LeaveOneOut_Source.csv,Supplementary Fig. S2 / Supplementary Table S1C,Leave-one-out IVW estimates for the primary PARK7 intermediate-B-cell MR instrument set.
+SupplementaryTableS7_Evidence_Boundary_Source.csv,Supplementary Table S7,Evidence-boundary source table defining what each analysis layer supports and does not prove.
+S7_GSE200972_LUSC_scRNA_PARK7_celltype_summary.csv,Supplementary Fig. S7,Public LUSC scRNA-seq PARK7 expression summary by marker-score-assigned cell type.
+S7_GSE200972_LUSC_scRNA_PARK7_cell_level.csv,Supplementary Fig. S7,"Cell-level PARK7 log2(CPM+1), detection status, sample and assigned cell type for GSE200972 LUSC tumor samples."
+SupplementaryTableS5_CMap_Top50_Filtered_Signature_Source.csv,Supplementary Table S5 / CMap input,Top 50 up and top 50 down genes from LUSC B-lineage PARK7-high vs PARK7-low cells after excluding PARK7/NRF2/redox anchor genes.
+CMap_Input_Up_top50_filtered.txt,CMap input,Filtered top 50 upregulated genes for CLUE/CMap upload.
+CMap_Input_Down_top50_filtered.txt,CMap input,Filtered top 50 downregulated genes for CLUE/CMap upload.
+CMap_Input_Tags_top50_filtered.txt,CMap input,Combined up/down filtered CMap tag file.
+TCGA_LUSC_PARK7_bulk_correlation.csv,Supplementary Fig. S8,"TCGA-LUSC PARK7 bulk-expression correlations with B-lineage, redox and squamous marker/module variables."
+TCGA_LUSC_selected_expression_modules.csv,Supplementary Fig. S8,Selected TCGA-LUSC expression and derived module source data used for PARK7 correlation plots.
+IHC_PARK7_ROI_based_image_Hscore_tiles.csv,Supplementary Fig. S9,Tile-level image-derived PARK7 DAB optical-density H-score values from biopsy/surgery overview and matched-field ROIs.
+IHC_PARK7_compartment_aware_ROI_Hscore_summary.csv,Supplementary Fig. S9,Compartment-aware ROI-level PARK7 image H-score summary for representative biopsy and surgery IHC images.
+IHC_PARK7_reader_Hscore_by_specimen_compartment.csv,Supplementary Fig. S9 / Table S4,Reader/pathologist H-score summary by specimen compartment with biopsy-vs-surgery nonparametric comparison.
+SupplementaryTableS8_Evidence_Reproducibility_Matrix.csv,Supplementary Table S8,Reviewer-facing evidence-boundary and reproducibility matrix with supported and unsupported claims for each analysis layer.
+SupplementaryTableS9_ReviewerFacing_ClaimBoundary_Matrix.csv,Supplementary Table S9,Reviewer-facing claim and allowed-wording boundary matrix for the prioritization manuscript.
+S10_MR_Audit_Method_Estimates.csv,Supplementary Fig. S10,MR estimator summary used in the reviewer-facing MR audit figure.
+S11_Spatial_Threshold_Permutation_Sensitivity.csv,Supplementary Fig. S11,Threshold and permutation sensitivity for spatial B-cell/antioxidant same-spot overlap.
+S11_Spatial_Permutation_Null_Distribution.csv,Supplementary Fig. S11,Permutation null overlaps for selected spatial threshold settings.
+S12_scRNA_PARK7_PatientLevel_Pseudobulk.csv,Supplementary Fig. S12,Patient/sample-level PARK7 detection and expression summaries by broad assigned cell type.
+S13_TCGA_LUSC_PARK7_Context_Correlations.csv,Supplementary Fig. S13,TCGA-LUSC PARK7 bulk-expression correlation context by marker/signature class.
+S14_NetworkInference_TopPathway_Audit.csv,Supplementary Fig. S14,Top pathway enrichment entries used for the network-inference boundary audit.
+S14_NetworkInference_TopGeneClass_Audit.csv,Supplementary Fig. S14,Gene-class audit of top network-inferred PARK7-associated genes.
+S15_GSE148071_LUSC_scRNA_PARK7_celltype_summary.csv,Supplementary Fig. S15,Independent GSE148071 LUSC scRNA validation source data.
+S15_GSE148071_LUSC_scRNA_sample_summary.csv,Supplementary Fig. S15,Independent GSE148071 LUSC scRNA validation source data.
+S15_GSE148071_LUSC_scRNA_Blineage_stress_scores.csv,Supplementary Fig. S15,Independent GSE148071 LUSC scRNA validation source data.
+S15_GSE148071_LUSC_scRNA_cell_level_selected_scores.csv,Supplementary Fig. S15,Independent GSE148071 LUSC scRNA validation source data.
+S16_MR_Extended_Robust_Estimators.csv,Supplementary Fig. S16,Extended MR robust estimator summary.
+S16_MR_RadialLike_Steiger_Source.csv,Supplementary Fig. S16,Radial-like outlier diagnostics and approximate Steiger directionality source.
+S16_MR_Threshold_CisWindow_Sensitivity.csv,Supplementary Fig. S16,MR sensitivity across available eQTL thresholds and cis windows.
+S16_MR_Extended_Diagnostics_Summary.csv,Supplementary Fig. S16,Extended MR diagnostics summary.
+S17_Coloc_ABF_Prior_Sensitivity.csv,Supplementary Fig. S17,Approximate ABF colocalization prior sensitivity using local PARK7 region data.
+S17_PARK7_LocusCompare_Source.csv,Supplementary Fig. S17,PARK7 region eQTL/GWAS merged source for locus-compare plot.
+S18_Spatial_Neighborhood_Distance_Analysis.csv,Supplementary Fig. S18,Distance-to-B-cell-high neighborhood analysis for antioxidant score.
+S19_GSE148071_Blineage_PARK7high_StressScore_Meta.csv,Supplementary Fig. S19,Across-sample B-lineage PARK7-high stress-score directionality in GSE148071.

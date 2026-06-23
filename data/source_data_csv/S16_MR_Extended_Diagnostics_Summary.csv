@@ -1,0 +1,7 @@
+diagnostic,value,p,interpretation,se
+Cochran_Q,6.659739277424606,1.0,heterogeneity test for Wald ratios,
+MR_Egger_intercept,0.0005704586537641092,0.7929127728552953,directional pleiotropy screen,0.0021729265583681173
+Approximate_Steiger_sum_R2_exposure,1.3240880738757128,,exposure_to_outcome,
+Approximate_Steiger_sum_R2_outcome,0.013946649716846757,,exposure_to_outcome,
+Radial_like_abs_residual_gt3_count,0.0,,outlier screen based on standardized Wald-ratio residuals,
+MR_RAPS_RadialMR_package_status,,,mr.raps and RadialMR were unavailable for R 4.5.3 CRAN binary; robust alternatives are reported.,

@@ -1,0 +1,11 @@
+Metric,Value,Interpretation
+n specimens,15,Two independent reader/pathologist H-scores were available for each specimen
+Mean final H-score,198.333,Mean of two reader H-scores
+SD final H-score,32.053,Sample standard deviation
+Range final H-score,120-250,Observed mean H-score range
+Pearson correlation,0.924,Linear association between reader H-scores
+Spearman correlation,0.861,Rank association between reader H-scores
+"ICC(2,1)",0.852,Two-way random-effects absolute-agreement ICC for single-reader scores
+"ICC(2,k)",0.92,Two-way random-effects absolute-agreement ICC for mean reader scores
+Mean absolute reader difference,12.667,Average absolute H-score difference between readers
+Maximum absolute reader difference,40.0,Largest absolute H-score difference between readers

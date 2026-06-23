@@ -1,0 +1,8 @@
+Evidence_layer,What_it_supports,What_it_does_not_prove,Interpretation
+Cell-type MR,PARK7 intermediate-B-cell genetic prioritization,Functional causality or a large clinical effect,Prioritization
+SMR/colocalization,Suggestive LUSC-preferential locus-level support,High-confidence shared causal variant,Suggestive regional evidence
+Spatial transcriptomics,B-cell/redox spatial context and limited heterogeneous co-occurrence,Spatial PARK7 expression or uniform co-localization,Indirect context
+In silico perturbation,"ER-stress/UPR, translation, and stress-response hypotheses",True PARK7 perturbation biology,Computational hypothesis
+CMap,Exploratory perturbational context,"Drug efficacy, therapeutic vulnerability, or treatment recommendation",Exploratory
+PARK7 IHC,Tissue-level PARK7 protein expression,B-cell localization or quantitative validation cohort,Supportive tissue-level evidence
+Future multiplex IF/functional assays,Direct PARK7/B-cell co-localization and functional testing,Not performed in the present study,Future validation

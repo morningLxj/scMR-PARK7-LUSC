@@ -1,44 +1,53 @@
-# Paper Code Repository
+# scMR-PARK7-LUSC
 
-This repository contains the source code, processed data, and results for the paper.
+Code and processed source data for the manuscript:
+
+**Cell-type-resolved genetic prioritization of PARK7 in lung squamous cell carcinoma with indirect spatial and transcriptomic context**
+
+This repository accompanies a hypothesis-generating candidate-prioritization study of PARK7 in lung squamous cell carcinoma (LUSC). The analysis integrates cell-type-resolved Mendelian randomization, SMR/colocalization context, spatial transcriptomic redox scoring, public single-cell RNA-seq validation, TCGA-LUSC bulk-expression context, PARK7-centered network inference, exploratory CMap annotation, and supportive tissue-level PARK7 IHC source data.
 
 ## Repository Structure
 
-### `Scripts/`
-Contains all Python (`.py`) and R (`.R`) scripts used for data analysis, Mendelian Randomization (MR), and figure generation.
-- **Key Scripts:**
-  - `run_mr_*.py/R`: Main Mendelian Randomization analysis pipelines.
-  - `generate_figure*.py`: Scripts to generate the figures in the manuscript.
-  - `generate_table*.py`: Scripts to generate the tables in the manuscript.
-  - `run_pp4_*.R`: Colocalization analysis scripts.
+```text
+data/
+  source_data_csv/        Processed source-data tables used for manuscript figures and supplementary analyses
+  source_workbooks/       Supplementary source-data workbooks
+figures/
+  main/                   Submitted main figures as TIFF files
+  supplementary/          Submitted supplementary figures as TIFF files
+scripts/
+  analysis/               Analysis/provenance scripts from the final submission workflow
+  check_repository_integrity.py
+docs/
+  DATA_AVAILABILITY.md
+  REPRODUCIBILITY_NOTES.md
+requirements.txt
+environment.yml
+```
 
-### `Data/`
-Contains key processed data files and classification results.
-- `Final_Classified_Results.csv`: Final classification of risk genes.
-- `Final_Gold_Standard.csv`: Gold standard gene set used for validation.
-- `Final_Subtype_Specificity.csv`: Subtype specificity analysis results.
-- `candidates.txt`: List of candidate genes analyzed.
+## Quick Check
 
-### `Tables/`
-Contains the final tables used in the manuscript.
-- `Table1_MR_Summary.csv`
-- `Table2_PARK7_LUSC_Specificity.csv`
-- `Table3_Protein_Validation.csv`
-- `Table4_CMap_Translation.csv`
-- `TableS1_Full_MR_Statistics.csv`: Supplementary table with full statistics.
+After cloning, run:
 
-### `Figures/`
-Contains the high-resolution figures (PDF and PNG) generated for the manuscript.
+```bash
+python scripts/check_repository_integrity.py
+```
 
-## Usage
+The check verifies the expected source-data files, main figures, supplementary figures, and workflow scripts.
 
-1.  **Prerequisites**: Ensure you have Python 3.x and R 4.x installed.
-2.  **Data**: Place any large raw data files (e.g., GWAS summary statistics, huge eQTL tables) in a `RawData/` directory (not included here due to size limits) if you intend to re-run the full pipeline.
-3.  **Running Analysis**:
-    - The scripts in `Scripts/` are generally named according to their function.
-    - Start with `run_mr_python.py` for the main MR analysis.
-    - Use `generate_figure*.py` to reproduce specific figures.
+## Reproducibility Scope
 
-## License
+This repository includes processed source data sufficient to inspect the numerical inputs behind the submitted figures and tables. The full end-to-end regeneration of every upstream result requires large public raw resources that are not redistributed here, including GWAS/eQTL summary data, public scRNA-seq matrices, TCGA-LUSC expression data, spatial transcriptomic inputs, and CMap/L1000 outputs. See `docs/DATA_AVAILABILITY.md` for data-source notes.
 
-[Specify License here, e.g., MIT]
+The scripts in `scripts/analysis/` are retained as provenance workflows from the final local submission assembly. They may require path edits and downloaded raw data before rerunning on another machine.
+
+## Evidence Boundary
+
+The manuscript and this repository should be interpreted as supporting a candidate-prioritization framework. They do not establish definitive causality, high-confidence colocalization, direct spatial PARK7 localization, B-cell-specific PARK7 protein localization, validated biomarker status, therapeutic vulnerability, or drug efficacy.
+
+## Citation
+
+If you use this repository, cite the associated manuscript when available and reference this GitHub repository:
+
+`morningLxj/scMR-PARK7-LUSC`
+

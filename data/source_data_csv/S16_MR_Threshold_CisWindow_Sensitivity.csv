@@ -1,0 +1,6 @@
+setting,n_instruments,wald_ratio_diagnostic_beta,se,p,interpretation
+all_primary,91,0.10053348155378897,0.00745321210158733,1.8250558620408643e-41,directionality/stability only; not primary MR scale
+eQTL_P_lt_5e-8,40,0.10999033587149305,0.010449174537254427,6.540683573359436e-26,directionality/stability only; not primary MR scale
+eQTL_P_lt_1e-7,47,0.1126037829444564,0.009777949921478459,1.094624158847913e-30,directionality/stability only; not primary MR scale
+eQTL_P_lt_1e-6,91,0.10053348155378897,0.00745321210158733,1.8250558620408643e-41,directionality/stability only; not primary MR scale
+cis_10Mb,91,0.10053348155378897,0.00745321210158733,1.8250558620408643e-41,directionality/stability only; not primary MR scale

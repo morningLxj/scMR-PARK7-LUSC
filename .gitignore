@@ -2,28 +2,36 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .ipynb_checkpoints/
-*.venv
-*.env
 
 # R
 .RData
 .Rhistory
-.Rproj.user
+.Rproj.user/
 
-# System
+# Environments
+.venv/
+venv/
+env/
+*.env
+
+# Local raw data and working outputs
+raw_data/
+external_data/
+work/
+outputs/
+tmp/
+cache/
+*.gz
+*.tar
+*.zip
+
+# System and IDE
 .DS_Store
 Thumbs.db
-
-# IDE
 .vscode/
 .idea/
 
-# Data (usually large files are not uploaded to git)
-*.gz
-*.zip
-*.csv
-*.tsv
-# Uncomment the below line if you want to ignore all csv/tsv files, or keep them if they are small
-# *.csv
-# *.tsv

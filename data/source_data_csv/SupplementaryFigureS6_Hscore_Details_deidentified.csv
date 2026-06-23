@@ -1,0 +1,16 @@
+﻿Case_ID,Specimen_type,Reader1_strong_3plus_percent,Reader1_moderate_2plus_percent,Reader1_weak_1plus_percent,Reader1_negative_0plus_percent,Reader1_H_score,Reader2_strong_3plus_percent,Reader2_moderate_2plus_percent,Reader2_weak_1plus_percent,Reader2_negative_0plus_percent,Reader2_H_score,Mean_H_score
+IHC-01,Biopsy,30,60,10,0,220,40,60,0,0,240,230
+IHC-02,Biopsy,0,80,20,0,180,0,80,20,0,180,180
+IHC-03,Biopsy,50,40,10,0,240,60,40,0,0,260,250
+IHC-04,Biopsy,10,70,20,0,190,10,70,20,0,190,190
+IHC-05,Biopsy,20,70,10,0,210,20,70,10,0,210,210
+IHC-06,Surgery,30,50,20,0,200,40,40,20,0,220,210
+IHC-07,Biopsy,0,40,60,0,140,0,0,100,0,100,120
+IHC-08,Biopsy,0,90,10,0,190,0,100,0,0,200,195
+IHC-09,Biopsy,20,60,20,0,200,20,60,20,0,200,200
+IHC-10,Biopsy,20,70,10,0,210,10,90,0,0,210,210
+IHC-11,Biopsy,10,90,0,0,210,10,90,0,0,210,210
+IHC-12,Biopsy,0,80,20,0,180,10,90,0,0,210,195
+IHC-13,Biopsy,30,70,0,0,230,20,80,0,0,220,225
+IHC-14,Biopsy,10,80,10,0,200,10,90,0,0,210,205
+IHC-15,Surgery,10,40,50,0,160,0,30,70,0,130,145
