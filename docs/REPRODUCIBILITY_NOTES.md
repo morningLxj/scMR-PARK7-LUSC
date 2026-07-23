@@ -5,7 +5,7 @@
 The default analysis command reruns:
 
 - GSE148071 B-lineage PARK7 threshold sensitivity.
-- Export of complete PARK7 PP0-PP4 posteriors at the prespecified prior.
+- Export of complete PARK7 PP0-PP4 posteriors at the primary prior.
 
 ```bash
 python scripts/revision/run_major_revision_analyses.py
@@ -65,3 +65,9 @@ The figure script reads `data/inputs/` and `data/revision_results/` by default.
 ## Interpretation
 
 The scripts reproduce reported computations from retained processed inputs. They do not convert the correlated regional PARK7 variant set into independent instruments and must not be used to claim causality, high-confidence colocalization, B-cell-specific localization, prognosis, or therapy.
+
+The LD step clumps on the exposure associations and then joins the retained
+variant to accession-labelled outcome associations in
+`data/inputs/PARK7_StrictPruned_Outcome_Associations.csv`. GCST004750 is the
+primary LUSC outcome; GCST004748 is retained only as an
+overall-lung-cancer sensitivity outcome.

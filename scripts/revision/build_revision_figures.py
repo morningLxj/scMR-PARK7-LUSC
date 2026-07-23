@@ -73,7 +73,7 @@ def build_figure_1() -> None:
         ),
         (
             "Strict LD pruning",
-            "rs6700772 only; OR 1.124 (95% CI 0.991–1.274); P = 0.069.",
+            "rs6700772 only; LUSC OR 1.228 (95% CI 1.002–1.506; nominal P = 0.048); overall-lung-cancer sensitivity OR 1.124.",
             "Inconclusive",
         ),
         (
@@ -184,19 +184,16 @@ def build_figure_2() -> None:
     ld = np.loadtxt(GENERATED / "PARK7_primary_unique_EUR_LD.ld")
     audit = pd.read_csv(GENERATED / "MR_PARK7_LD_Audit_Summary.csv").iloc[0]
     strict = pd.read_csv(GENERATED / "MR_PARK7_LD_Pruned_Estimates.csv")
-    strict = strict[np.isclose(strict["clump_r2"].astype(float), 0.001)].iloc[0]
-
-    unpruned = {
-        "OR": math.exp(0.10018209650404473),
-        "low": math.exp(0.10018209650404473 - 1.96 * 0.007492100887441334),
-        "high": math.exp(0.10018209650404473 + 1.96 * 0.007492100887441334),
-    }
+    strict = strict[np.isclose(strict["clump_r2"].astype(float), 0.001)].copy()
+    strict = strict.set_index("outcome_id")
+    lusc = strict.loc["GCST004750"]
+    overall = strict.loc["GCST004748"]
 
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(7.2, 3.35), dpi=200, gridspec_kw={"width_ratios": [1.15, 1]}
     )
     fig.suptitle(
-        "PARK7 regional instruments are highly correlated and yield an inconclusive strict-pruned estimate",
+        "PARK7 regional instruments are highly correlated; strict pruning leaves one variant",
         fontsize=11.2,
         fontweight="bold",
         y=1.01,
@@ -225,15 +222,18 @@ def build_figure_2() -> None:
     )
 
     labels = [
-        "90-SNP diagnostic\n(LD unaccounted)",
-        "Strict-pruned rs6700772\n(r² < 0.001)",
+        "LUSC-specific\nGCST004750",
+        "Overall lung cancer\nGCST004748",
     ]
-    ors = np.array([unpruned["OR"], float(strict["OR"])])
-    lows = np.array([unpruned["low"], float(strict["CI_low"])])
-    highs = np.array([unpruned["high"], float(strict["CI_high"])])
+    ors = np.array([float(lusc["OR"]), float(overall["OR"])])
+    lows = np.array([float(lusc["CI_low"]), float(overall["CI_low"])])
+    highs = np.array([float(lusc["CI_high"]), float(overall["CI_high"])])
+    p_values = np.array([float(lusc["p"]), float(overall["p"])])
     y = np.array([1, 0])
-    colors = ["#999999", "#0072B2"]
-    for yi, or_value, lo, hi, color in zip(y, ors, lows, highs, colors):
+    colors = ["#0072B2", "#777777"]
+    for yi, or_value, lo, hi, p_value, color in zip(
+        y, ors, lows, highs, p_values, colors
+    ):
         ax2.errorbar(
             or_value,
             yi,
@@ -248,25 +248,25 @@ def build_figure_2() -> None:
         ax2.text(
             hi + 0.008,
             yi,
-            f"{or_value:.3f} ({lo:.3f}–{hi:.3f})",
+            f"{or_value:.3f} ({lo:.3f}–{hi:.3f}); P={p_value:.3f}",
             va="center",
             fontsize=6.8,
             color=color,
         )
     ax2.axvline(1.0, color="#4B5563", linestyle="--", linewidth=1)
     ax2.set_yticks(y, labels)
-    ax2.set_xlim(0.95, 1.31)
+    ax2.set_xlim(0.90, 1.60)
     ax2.set_ylim(-0.65, 1.65)
-    ax2.set_xlabel("Odds ratio for LUSC")
-    ax2.set_title("B. PARK7 effect estimates", loc="left", fontweight="bold")
+    ax2.set_xlabel("Outcome-specific odds ratio")
+    ax2.set_title("B. Strict-pruned rs6700772 Wald ratios", loc="left", fontweight="bold")
     ax2.grid(axis="x", linestyle=":", alpha=0.3)
     ax2.spines["top"].set_visible(False)
     ax2.spines["right"].set_visible(False)
     ax2.text(
         0.02,
         0.04,
-        "Only the strict-pruned estimate is used for inference.\n"
-        f"Wald P = {float(strict['p']):.3f}",
+        "Both estimates use the same exposure variant after r² < 0.001 clumping.\n"
+        "The LUSC association is nominal and does not establish causality.",
         transform=ax2.transAxes,
         fontsize=6.8,
         color="#24313D",
@@ -304,7 +304,7 @@ def build_figure_3() -> None:
         1, 2, figsize=(7.2, 3.3), dpi=200, gridspec_kw={"width_ratios": [1.35, 1]}
     )
     fig.suptitle(
-        "PARK7 colocalization is inconclusive at the prespecified prior and sensitive to p12",
+        "PARK7 colocalization is inconclusive at the primary prior and sensitive to p12",
         fontsize=11.2,
         fontweight="bold",
         y=1.01,
@@ -499,7 +499,7 @@ def build_figure_4() -> None:
     ax.text(
         0.03,
         0.97,
-        f"Spearman ρ = {rho_dist:.3f}\nP = {p_dist:.2e}\nNegligible positive association",
+            f"Spearman ρ = {rho_dist:.3f}\nNominal P = {p_dist:.2e}\nNegligible positive association",
         transform=ax.transAxes,
         va="top",
         fontsize=6.4,

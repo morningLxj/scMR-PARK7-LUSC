@@ -72,6 +72,9 @@ def run_ld_audit() -> None:
     instruments = pd.read_csv(
         SOURCE_ROOT / "PARK7_PerInstrument_F_Statistics.csv"
     )
+    outcomes = pd.read_csv(
+        SOURCE_ROOT / "PARK7_StrictPruned_Outcome_Associations.csv"
+    )
     leave_one_out = pd.read_csv(
         SOURCE_ROOT / "PARK7_LeaveOneOut_Source.csv"
     )
@@ -144,12 +147,56 @@ def run_ld_audit() -> None:
         )
         clumped_path = Path(f"{prefix}.clumped")
         clumped = pd.read_csv(clumped_path, sep=r"\s+")
-        retained = instruments[instruments["SNP"].isin(clumped["SNP"])].copy()
-        estimate = ivw_ratio_estimate(retained)
-        estimate["clump_r2"] = r2
-        estimate_rows.append(estimate)
-        retained.insert(0, "clump_r2", r2)
-        retained_rows.append(retained)
+        retained_exposure = instruments[
+            instruments["SNP"].isin(clumped["SNP"])
+        ].copy()
+        retained_exposure = retained_exposure.drop(
+            columns=[
+                "outcome_effect_allele",
+                "outcome_other_allele",
+                "outcome_beta",
+                "outcome_se",
+                "outcome_p",
+                "included_in_primary_lusc_mr",
+            ],
+            errors="ignore",
+        )
+        for outcome_id, outcome_rows in outcomes.groupby("outcome_id", sort=False):
+            retained = retained_exposure.merge(
+                outcome_rows,
+                on="SNP",
+                how="inner",
+                validate="one_to_one",
+            )
+            if len(retained) != len(retained_exposure):
+                raise ValueError(
+                    f"{outcome_id} is missing one or more strict-pruned variants"
+                )
+            allele_match = (
+                retained["effect_allele"].astype(str)
+                == retained["outcome_effect_allele"].astype(str)
+            ) & (
+                retained["other_allele"].astype(str)
+                == retained["outcome_other_allele"].astype(str)
+            )
+            if not allele_match.all():
+                raise ValueError(f"Alleles are not harmonized for {outcome_id}")
+
+            estimate = ivw_ratio_estimate(retained)
+            estimate.update(
+                {
+                    "clump_r2": r2,
+                    "outcome_id": outcome_id,
+                    "outcome_label": retained["outcome_label"].iloc[0],
+                    "analysis_role": retained["analysis_role"].iloc[0],
+                    "cases": int(retained["cases"].iloc[0]),
+                    "controls": int(retained["controls"].iloc[0]),
+                    "ancestry": retained["ancestry"].iloc[0],
+                }
+            )
+            estimate_rows.append(estimate)
+            retained.insert(0, "clump_r2", r2)
+            retained_rows.append(retained)
 
     pd.DataFrame([ld_summary]).to_csv(OUT / "MR_PARK7_LD_Audit_Summary.csv", index=False)
     pd.DataFrame(estimate_rows).to_csv(
@@ -158,6 +205,7 @@ def run_ld_audit() -> None:
     pd.concat(retained_rows, ignore_index=True).to_csv(
         OUT / "MR_PARK7_LD_Pruned_Instruments.csv", index=False
     )
+    outcomes.to_csv(OUT / "MR_PARK7_Outcome_Provenance.csv", index=False)
 
 
 def residualize(values: pd.Series, covariate: pd.Series) -> np.ndarray:

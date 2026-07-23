@@ -8,7 +8,9 @@
 - CosMx NSCLC spatial molecular imaging dataset described by He et al., Nature Biotechnology 2022.
 - NCBI GEO series GSE148071 and GSE200972.
 - TCGA-LUSC expression, clinical, and survival resources.
-- Lung-cancer summary association resources described in the manuscript.
+- McKay et al. lung-cancer summary association resources: GCST004750
+  (LUSC-specific primary outcome) and GCST004748 (overall-lung-cancer
+  sensitivity outcome).
 
 ## Included here
 
@@ -16,6 +18,8 @@
 - Major-revision result tables.
 - Revised figure files and figure-building code.
 - De-identified IHC H-score summaries.
+- Harmonized rs6700772 outcome associations and accession-level provenance for
+  the strict-pruned primary and sensitivity estimates.
 
 ## Not redistributed
 

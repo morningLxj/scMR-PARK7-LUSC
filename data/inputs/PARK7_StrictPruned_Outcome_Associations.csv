@@ -1,0 +1,3 @@
+outcome_id,outcome_label,analysis_role,cases,controls,ancestry,SNP,outcome_effect_allele,outcome_other_allele,outcome_beta,outcome_se,outcome_p
+GCST004750,Lung squamous cell carcinoma,Primary LUSC outcome,7426,55627,European,rs6700772,G,C,0.039915,0.01911,0.0367400469
+GCST004748,Overall lung cancer,Histology-unspecific sensitivity outcome,29266,56450,European,rs6700772,G,C,0.022631,0.011906,0.0573316894

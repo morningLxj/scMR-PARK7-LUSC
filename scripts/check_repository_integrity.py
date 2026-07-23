@@ -11,12 +11,14 @@ REQUIRED = [
     "README.md",
     "data/README.md",
     "data/inputs/PARK7_PerInstrument_F_Statistics.csv",
+    "data/inputs/PARK7_StrictPruned_Outcome_Associations.csv",
     "data/inputs/PARK7_LeaveOneOut_Source.csv",
     "data/inputs/GSE148071_LUSC_scRNA_cell_level_selected_scores.csv",
     "data/inputs/PARK7_Coloc_ABF_Prior_Sensitivity.csv",
     "data/inputs/Visium_Spatial_CoLocalization_Scores.csv",
     "data/revision_results/MR_PARK7_LD_Audit_Summary.csv",
     "data/revision_results/MR_PARK7_LD_Pruned_Estimates.csv",
+    "data/revision_results/MR_PARK7_Outcome_Provenance.csv",
     "data/revision_results/PARK7_Coloc_Complete_Posteriors.csv",
     "data/revision_results/Spatial_CosMx_CD74_Myeloid_Sensitivity.csv",
     "data/revision_results/scRNA_PARK7_Threshold_Sensitivity_Meta.csv",
@@ -73,7 +75,20 @@ def main() -> None:
         "data/revision_results/MR_PARK7_LD_Pruned_Estimates.csv"
     )
     assert all(int(float(row["n_instruments"])) == 1 for row in pruned)
-    assert all(close(float(row["OR"]), 1.124, tolerance=1e-3) for row in pruned)
+    primary_lusc = [
+        row for row in pruned
+        if row["outcome_id"] == "GCST004750"
+        and close(float(row["clump_r2"]), 0.001)
+    ]
+    overall_lung = [
+        row for row in pruned
+        if row["outcome_id"] == "GCST004748"
+        and close(float(row["clump_r2"]), 0.001)
+    ]
+    assert len(primary_lusc) == 1
+    assert len(overall_lung) == 1
+    assert close(float(primary_lusc[0]["OR"]), 1.228, tolerance=1e-3)
+    assert close(float(overall_lung[0]["OR"]), 1.124, tolerance=1e-3)
 
     coloc = read_rows(
         "data/revision_results/PARK7_Coloc_Complete_Posteriors.csv"

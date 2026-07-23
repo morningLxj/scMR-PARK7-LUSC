@@ -11,9 +11,17 @@ Revision date: 2026-07-23
 - Pairs with r-squared at least 0.1: 3,916 of 3,916.
 - Pairs with r-squared at least 0.8: 1,559.
 - Strict clumping retained `rs6700772`.
-- Wald-ratio OR: 1.124; 95% CI: 0.991-1.274; P=0.069.
+- LUSC-specific outcome (GCST004750): Wald-ratio OR 1.228; 95% CI
+  1.002-1.506; nominal P=0.048.
+- Overall-lung-cancer sensitivity outcome (GCST004748): Wald-ratio OR 1.124;
+  95% CI 0.991-1.274; P=0.069.
 
-The submitted OR 1.277 was not reproduced from the retained per-variant source table. The unpruned diagnostic recomputation ignores LD and is not inferential.
+The retained per-variant source table had been populated from GCST004748
+(overall lung cancer) despite being labelled as the primary LUSC outcome. The
+strict-pruned primary estimate was therefore recomputed from the
+histology-specific GCST004750 association for the same harmonized variant. The
+submitted OR 1.277 was not reproduced. The unpruned diagnostic recomputation
+ignores LD and is not inferential.
 
 ## Colocalization
 

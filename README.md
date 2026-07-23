@@ -16,8 +16,12 @@ Key revision findings:
 - Of 90 unique variants, 89 matched the 1000 Genomes European reference.
 - Median pairwise r-squared was 0.645; all 3,916 matched pairs had r-squared at least 0.1.
 - PLINK clumping at r-squared below 0.001 retained rs6700772 only.
-- The rs6700772 Wald-ratio estimate was OR 1.124 (95% CI 0.991-1.274; P=0.069).
-- In LUSC, PP1 exceeded PP4 under the prespecified colocalization prior; PP4 was 0.367-0.377.
+- With the LUSC-specific outcome (GCST004750), the rs6700772 Wald ratio was
+  OR 1.228 (95% CI 1.002-1.506; nominal P=0.048).
+- The histology-unspecific overall-lung-cancer sensitivity outcome (GCST004748)
+  gave OR 1.124 (95% CI 0.991-1.274; P=0.069).
+- In LUSC, PP1 exceeded PP4 under the primary colocalization prior; PP4 was
+  0.367-0.377.
 - The primary Visium section did not measure PARK7 and showed below-expected marker overlap.
 - Adjusted CosMx associations were weak and heterogeneous.
 - Single-cell score associations depended on threshold, TCGA-LUSC survival models were null, and IHC was descriptive.
