@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
+from PIL import Image
 from scipy import stats
 from scipy.spatial import cKDTree
 from statsmodels.nonparametric.smoothers_lowess import lowess
@@ -44,15 +45,18 @@ plt.rcParams.update(
 
 
 def save_figure(fig: plt.Figure, stem: str) -> None:
-    fig.savefig(OUT / f"{stem}.png", dpi=400, bbox_inches="tight", facecolor="white")
-    fig.savefig(
-        OUT / f"{stem}.tiff",
-        dpi=400,
-        bbox_inches="tight",
-        facecolor="white",
-        pil_kwargs={"compression": "tiff_lzw"},
-    )
+    png_path = OUT / f"{stem}.png"
+    tiff_path = OUT / f"{stem}.tiff"
+    fig.savefig(png_path, dpi=400, bbox_inches="tight", facecolor="white")
     plt.close(fig)
+
+    with Image.open(png_path) as source:
+        if source.mode == "RGBA":
+            rgb = Image.new("RGB", source.size, "white")
+            rgb.paste(source, mask=source.getchannel("A"))
+        else:
+            rgb = source.convert("RGB")
+        rgb.save(tiff_path, dpi=(400, 400), compression="tiff_lzw")
 
 
 def build_figure_1() -> None:
