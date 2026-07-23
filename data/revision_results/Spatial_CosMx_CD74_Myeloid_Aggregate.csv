@@ -1,0 +1,7 @@
+metric,n_samples,mean_correlation,median_correlation,positive_samples,negative_samples
+pearson_original_B_vs_oxidative,5,0.3433769601986988,0.4885976065831698,3,2
+pearson_CD74_excluded_B_vs_oxidative,5,0.2302025159940741,0.34532928355922854,4,1
+partial_pearson_CD74_excluded_adjusted_myeloid,5,0.14617498700180054,0.1605745194869651,4,1
+spearman_original_B_vs_oxidative,5,0.4053975986956015,0.5172477061276525,3,2
+spearman_CD74_excluded_B_vs_oxidative,5,0.2627479714676649,0.3771320794687129,4,1
+partial_spearman_CD74_excluded_adjusted_myeloid,5,0.14627136440241698,0.18027318700466385,4,1

@@ -1,0 +1,2 @@
+requested_instruments,instruments_in_1000G_EUR,max_pairwise_r2,median_pairwise_r2,pairs_r2_ge_0_001,pairs_r2_ge_0_01,pairs_r2_ge_0_1,pairs_r2_ge_0_8,total_pairs
+90,89,1.0,0.6445225,3916,3916,3916,1559,3916

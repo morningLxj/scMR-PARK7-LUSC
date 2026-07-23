@@ -3,12 +3,10 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.10
+  - lifelines>=0.29
   - matplotlib>=3.8
   - numpy>=1.26
-  - openpyxl>=3.1
   - pandas>=2.1
   - pillow>=10.0
-  - python-docx>=1.1
   - scipy>=1.11
   - statsmodels>=0.14
-

@@ -1,7 +1,0 @@
-﻿Rank,Gene,Cell type,n instruments,Beta,SE,OR,95% CI,P value,Interpretation
-1,PARK7,Intermediate B cells,91,0.244,0.011,1.277,1.250-1.304,<1.0e-300,Primary PARK7 signal
-2,CTSW,NK cells,143,-0.075,0.007,0.928,0.915-0.941,<1.0e-300,Comparator MR signal
-3,TMEM50A,Effector CD8 T cells,163,0.155,0.005,1.167,1.156-1.179,<1.0e-300,Comparator MR signal
-4,RPS26,SOX4+ CD4 T cells,146,-0.215,0.013,0.806,0.787-0.826,<1.0e-300,Comparator MR signal
-5,KCNAB2,Effector CD8 T cells,205,0.021,0.006,1.022,1.010-1.033,2.26e-04,Comparator MR signal
-6,PLOD1,Effector CD8 T cells,101,0.017,0.008,1.017,1.002-1.032,0.0234,Comparator MR signal

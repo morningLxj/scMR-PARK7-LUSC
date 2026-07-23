@@ -1,28 +1,29 @@
 # Data Availability
 
-This repository contains processed source-data tables under `data/source_data_csv/` and supplementary source-data workbooks under `data/source_workbooks/`.
+## Public resources
 
-## Included Processed Data
+- OneK1K immune-cell eQTL resource: Yazar et al., Science 2022.
+- 1000 Genomes Phase 3 European reference panel.
+- 10x Genomics Visium CytAssist FFPE LUSC demonstration dataset, Space Ranger 2.0.0.
+- CosMx NSCLC spatial molecular imaging dataset described by He et al., Nature Biotechnology 2022.
+- NCBI GEO series GSE148071 and GSE200972.
+- TCGA-LUSC expression, clinical, and survival resources.
+- Lung-cancer summary association resources described in the manuscript.
 
-- Figure and table source data used for the manuscript and supplementary material.
-- De-identified IHC H-score summaries and ROI/tile-derived image quantification source tables.
-- Processed public scRNA-seq, TCGA-LUSC, colocalization, spatial context, MR diagnostic, CMap signature, and evidence-boundary summary tables.
-- CMap filtered top-50 up/down input gene lists.
+## Included here
 
-## Not Redistributed
+- Processed inputs needed to inspect or rerun the included-input analyses.
+- Major-revision result tables.
+- Revised figure files and figure-building code.
+- De-identified IHC H-score summaries.
 
-Large raw or restricted resources are not included in this repository:
+## Not redistributed
 
-- Raw GWAS and eQTL summary statistic files.
-- Full public single-cell RNA-seq matrices and raw archives.
-- TCGA bulk-expression full matrices.
-- Large spatial transcriptomic raw objects.
-- CMap/L1000 raw database files.
-- Identifiable pathology records or raw clinical identifiers.
+- Raw GWAS or eQTL summary-statistic archives.
+- The 1000 Genomes binary reference files.
+- Full CosMx cell-by-gene matrices.
+- Full TCGA-LUSC expression, clinical, or survival downloads.
+- Full raw single-cell matrices.
+- Raw identifiable pathology records or patient images.
 
-The relevant public resource names and provenance notes are summarized in `data/source_data_csv/SupplementaryTableS6_Public_Datasets_Resources_Source.csv` and `data/source_data_csv/Source_Data_CSV_Manifest.csv`.
-
-## Privacy Note
-
-Only de-identified summary and source-data tables are included. Individual-level clinical identifiers and raw identifiable pathology records are not shared.
-
+The repository is therefore a bounded reproducibility package. Included-input steps can be rerun directly; external-resource steps require users to obtain the source data from the original providers.

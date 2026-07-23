@@ -1,37 +1,39 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .ipynb_checkpoints/
 
-# R
-.RData
-.Rhistory
-.Rproj.user/
-
-# Environments
+# Environments and secrets
 .venv/
 venv/
 env/
 *.env
 
-# Local raw data and working outputs
+# External and local-only resources
+external/
 raw_data/
-external_data/
+private_data/
+patient_images/
 work/
 outputs/
+qa/
 tmp/
 cache/
-*.gz
-*.tar
+
+# Submission and office files are intentionally excluded
+*.doc
+*.docx
+*.pdf
+*.ppt
+*.pptx
 *.zip
+*.log
 
 # System and IDE
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-

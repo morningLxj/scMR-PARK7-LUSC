@@ -1,53 +1,84 @@
 # scMR-PARK7-LUSC
 
-Code and processed source data for the manuscript:
+Code, processed inputs, revision results, and figures for:
 
-**Cell-type-resolved genetic prioritization of PARK7 in lung squamous cell carcinoma with indirect spatial and transcriptomic context**
+**Cross-modal assessment of PARK7 in lung squamous cell carcinoma reveals limited convergence across genetic, spatial, and tissue evidence**
 
-This repository accompanies a hypothesis-generating candidate-prioritization study of PARK7 in lung squamous cell carcinoma (LUSC). The analysis integrates cell-type-resolved Mendelian randomization, SMR/colocalization context, spatial transcriptomic redox scoring, public single-cell RNA-seq validation, TCGA-LUSC bulk-expression context, PARK7-centered network inference, exploratory CMap annotation, and supportive tissue-level PARK7 IHC source data.
+This repository represents the 2026-07-23 major-revision analysis state. It replaces the earlier candidate-prioritization layout.
 
-## Repository Structure
+## Main conclusion
+
+The available evidence does not establish an LD-independent causal effect, a shared causal variant, a PARK7-positive B-cell niche, a PARK7-specific stress program, prognostic value, or B-cell-specific protein localization.
+
+Key revision findings:
+
+- The submitted leave-one-out table contained 91 rows but 90 unique variants.
+- Of 90 unique variants, 89 matched the 1000 Genomes European reference.
+- Median pairwise r-squared was 0.645; all 3,916 matched pairs had r-squared at least 0.1.
+- PLINK clumping at r-squared below 0.001 retained rs6700772 only.
+- The rs6700772 Wald-ratio estimate was OR 1.124 (95% CI 0.991-1.274; P=0.069).
+- In LUSC, PP1 exceeded PP4 under the prespecified colocalization prior; PP4 was 0.367-0.377.
+- The primary Visium section did not measure PARK7 and showed below-expected marker overlap.
+- Adjusted CosMx associations were weak and heterogeneous.
+- Single-cell score associations depended on threshold, TCGA-LUSC survival models were null, and IHC was descriptive.
+
+![Cross-modal evidence direction](figures/main/Figure1_Cross_Modal_Assessment.png)
+
+## Repository layout
 
 ```text
 data/
-  source_data_csv/        Processed source-data tables used for manuscript figures and supplementary analyses
-  source_workbooks/       Supplementary source-data workbooks
+  inputs/                 Processed inputs retained for revision analyses
+  revision_results/       Reported major-revision result tables
 figures/
-  main/                   Submitted main figures as TIFF files
-  supplementary/          Submitted supplementary figures as TIFF files
+  main/                   Four revised main figures in PNG and TIFF
+  supplementary/          Descriptive PARK7 IHC supplementary figure
 scripts/
-  analysis/               Analysis/provenance scripts from the final submission workflow
+  revision/               Portable revision analysis and figure scripts
   check_repository_integrity.py
 docs/
   DATA_AVAILABILITY.md
   REPRODUCIBILITY_NOTES.md
-requirements.txt
-environment.yml
+  MAJOR_REVISION_AUDIT.md
 ```
 
-## Quick Check
+## Quick start
 
-After cloning, run:
+Create the environment:
+
+```bash
+conda env create -f environment.yml
+conda activate scmr-park7-lusc
+```
+
+Check repository integrity:
 
 ```bash
 python scripts/check_repository_integrity.py
 ```
 
-The check verifies the expected source-data files, main figures, supplementary figures, and workflow scripts.
+Reproduce the included-input single-cell threshold and colocalization tables:
 
-## Reproducibility Scope
+```bash
+python scripts/revision/run_major_revision_analyses.py
+```
 
-This repository includes processed source data sufficient to inspect the numerical inputs behind the submitted figures and tables. The full end-to-end regeneration of every upstream result requires large public raw resources that are not redistributed here, including GWAS/eQTL summary data, public scRNA-seq matrices, TCGA-LUSC expression data, spatial transcriptomic inputs, and CMap/L1000 outputs. See `docs/DATA_AVAILABILITY.md` for data-source notes.
+Rebuild the four main figures from included processed inputs and revision results:
 
-The scripts in `scripts/analysis/` are retained as provenance workflows from the final local submission assembly. They may require path edits and downloaded raw data before rerunning on another machine.
+```bash
+python scripts/revision/build_revision_figures.py
+```
 
-## Evidence Boundary
+The LD, CosMx, and TCGA steps require external resources that are not redistributed. See [Reproducibility Notes](docs/REPRODUCIBILITY_NOTES.md).
 
-The manuscript and this repository should be interpreted as supporting a candidate-prioritization framework. They do not establish definitive causality, high-confidence colocalization, direct spatial PARK7 localization, B-cell-specific PARK7 protein localization, validated biomarker status, therapeutic vulnerability, or drug efficacy.
+## Data and privacy boundaries
+
+This repository contains processed public-data inputs, derived summary tables, and de-identified IHC summaries. It does not contain raw identifiable pathology records, submission Word files, reviewer correspondence, or local quality-control artifacts.
+
+The earlier CMap outputs and figures based on the uncorrected independent-instrument interpretation were removed from the current branch. Git history preserves prior versions for provenance; they should not be used as the current analysis state.
 
 ## Citation
 
-If you use this repository, cite the associated manuscript when available and reference this GitHub repository:
+Please cite the associated manuscript when available and reference:
 
-`morningLxj/scMR-PARK7-LUSC`
-
+`https://github.com/morningLxj/scMR-PARK7-LUSC`

@@ -1,7 +1,0 @@
-method,beta,se,p,n_instruments,note
-IVW,0.2443148430423485,0.0106061410722205,0.0,91,primary MR scale from Supplementary Table S1C
-Weighted median,0.2497006058621384,0.0094370417118962,0.0,91,primary MR scale from Supplementary Table S1C
-MR-Egger slope,0.2531012524164098,0.0097034878878674,0.0,91,primary MR scale from Supplementary Table S1C
-Simple mode,0.10624907258617244,,,91,Wald-ratio diagnostic scale; directionality only
-Weighted mode,0.10707324267144298,,,91,Wald-ratio diagnostic scale; directionality only
-Huber robust IVW,0.10088401170132254,,,91,Wald-ratio diagnostic scale; directionality only

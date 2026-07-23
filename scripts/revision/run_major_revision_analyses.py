@@ -1,0 +1,586 @@
+from __future__ import annotations
+
+import argparse
+import math
+import os
+import subprocess
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SOURCE_ROOT = Path(
+    os.environ.get("PARK7_SOURCE_ROOT", REPO_ROOT / "data" / "inputs")
+).resolve()
+PROJECT_ROOT = Path(
+    os.environ.get("PARK7_PROJECT_ROOT", REPO_ROOT / "external")
+).resolve()
+COSMX_ROOT = Path(
+    os.environ.get("PARK7_COSMX_ROOT", PROJECT_ROOT / "cosmx")
+).resolve()
+OUT = Path(
+    os.environ.get("PARK7_OUT", REPO_ROOT / "data" / "revision_results")
+).resolve()
+OUT.mkdir(parents=True, exist_ok=True)
+
+
+def bh_fdr(values: pd.Series) -> pd.Series:
+    result = pd.Series(np.nan, index=values.index, dtype=float)
+    valid = values.notna()
+    p = values.loc[valid].astype(float).to_numpy()
+    if not len(p):
+        return result
+    order = np.argsort(p)
+    ranked = p[order]
+    adjusted = ranked * len(ranked) / np.arange(1, len(ranked) + 1)
+    adjusted = np.minimum.accumulate(adjusted[::-1])[::-1]
+    restored = np.empty_like(adjusted)
+    restored[order] = np.minimum(adjusted, 1.0)
+    result.loc[valid] = restored
+    return result
+
+
+def ivw_ratio_estimate(frame: pd.DataFrame) -> dict[str, float]:
+    d = frame.copy()
+    x = d["exposure_beta"].astype(float).to_numpy()
+    sx = d["exposure_se"].astype(float).to_numpy()
+    y = d["outcome_beta"].astype(float).to_numpy()
+    sy = d["outcome_se"].astype(float).to_numpy()
+    ratio = y / x
+    ratio_var = sy**2 / x**2 + (y**2 * sx**2) / x**4
+    weights = 1.0 / ratio_var
+    beta = float(np.sum(weights * ratio) / np.sum(weights))
+    se = float(math.sqrt(1.0 / np.sum(weights)))
+    p = float(2 * stats.norm.sf(abs(beta / se)))
+    return {
+        "n_instruments": int(len(d)),
+        "beta": beta,
+        "se": se,
+        "p": p,
+        "OR": math.exp(beta),
+        "CI_low": math.exp(beta - 1.96 * se),
+        "CI_high": math.exp(beta + 1.96 * se),
+    }
+
+
+def run_ld_audit() -> None:
+    plink = PROJECT_ROOT / "plink.exe"
+    bfile = PROJECT_ROOT / "Reference" / "g1000_eur"
+    instruments = pd.read_csv(
+        SOURCE_ROOT / "PARK7_PerInstrument_F_Statistics.csv"
+    )
+    leave_one_out = pd.read_csv(
+        SOURCE_ROOT / "PARK7_LeaveOneOut_Source.csv"
+    )
+    primary_snps = set(leave_one_out["SNP_removed"].astype(str))
+    instruments = instruments[instruments["SNP"].astype(str).isin(primary_snps)].copy()
+    instruments = instruments.drop_duplicates(subset="SNP", keep="first")
+
+    snplist = OUT / "PARK7_primary_unique_snps.txt"
+    snplist.write_text("\n".join(instruments["SNP"].astype(str)) + "\n", encoding="ascii")
+    ld_prefix = OUT / "PARK7_primary_unique_EUR_LD"
+    subprocess.run(
+        [
+            str(plink),
+            "--bfile",
+            str(bfile),
+            "--extract",
+            str(snplist),
+            "--r2",
+            "square",
+            "--out",
+            str(ld_prefix),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    ld = np.loadtxt(ld_prefix.with_suffix(".ld"))
+    upper = ld[np.triu_indices_from(ld, k=1)]
+    ld_summary = {
+        "requested_instruments": len(instruments),
+        "instruments_in_1000G_EUR": int(ld.shape[0]),
+        "max_pairwise_r2": float(np.nanmax(upper)),
+        "median_pairwise_r2": float(np.nanmedian(upper)),
+        "pairs_r2_ge_0_001": int(np.sum(upper >= 0.001)),
+        "pairs_r2_ge_0_01": int(np.sum(upper >= 0.01)),
+        "pairs_r2_ge_0_1": int(np.sum(upper >= 0.1)),
+        "pairs_r2_ge_0_8": int(np.sum(upper >= 0.8)),
+        "total_pairs": int(len(upper)),
+    }
+
+    estimate_rows = []
+    retained_rows = []
+    for r2 in (0.001, 0.01, 0.1):
+        assoc = OUT / f"PARK7_clump_input_r2_{r2}.tsv"
+        instruments[["SNP", "exposure_p"]].rename(
+            columns={"exposure_p": "P"}
+        ).to_csv(assoc, sep="\t", index=False)
+        prefix = OUT / f"PARK7_EUR_clump_r2_{r2}"
+        subprocess.run(
+            [
+                str(plink),
+                "--bfile",
+                str(bfile),
+                "--clump",
+                str(assoc),
+                "--clump-p1",
+                "1",
+                "--clump-p2",
+                "1",
+                "--clump-kb",
+                "10000",
+                "--clump-r2",
+                str(r2),
+                "--out",
+                str(prefix),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        clumped_path = Path(f"{prefix}.clumped")
+        clumped = pd.read_csv(clumped_path, sep=r"\s+")
+        retained = instruments[instruments["SNP"].isin(clumped["SNP"])].copy()
+        estimate = ivw_ratio_estimate(retained)
+        estimate["clump_r2"] = r2
+        estimate_rows.append(estimate)
+        retained.insert(0, "clump_r2", r2)
+        retained_rows.append(retained)
+
+    pd.DataFrame([ld_summary]).to_csv(OUT / "MR_PARK7_LD_Audit_Summary.csv", index=False)
+    pd.DataFrame(estimate_rows).to_csv(
+        OUT / "MR_PARK7_LD_Pruned_Estimates.csv", index=False
+    )
+    pd.concat(retained_rows, ignore_index=True).to_csv(
+        OUT / "MR_PARK7_LD_Pruned_Instruments.csv", index=False
+    )
+
+
+def residualize(values: pd.Series, covariate: pd.Series) -> np.ndarray:
+    x = np.column_stack([np.ones(len(covariate)), covariate.to_numpy(float)])
+    beta, *_ = np.linalg.lstsq(x, values.to_numpy(float), rcond=None)
+    return values.to_numpy(float) - x @ beta
+
+
+def partial_corr(x: pd.Series, y: pd.Series, z: pd.Series, rank: bool = False) -> float:
+    frame = pd.concat([x, y, z], axis=1).dropna()
+    if rank:
+        frame = frame.rank(method="average")
+    rx = residualize(frame.iloc[:, 0], frame.iloc[:, 2])
+    ry = residualize(frame.iloc[:, 1], frame.iloc[:, 2])
+    return float(np.corrcoef(rx, ry)[0, 1])
+
+
+def run_cosmx_sensitivity() -> None:
+    data_root = COSMX_ROOT
+    samples = ["Lung6", "Lung9_Rep2", "Lung12", "Lung13", "Lung5_Rep3"]
+    b_original = ["CD79A", "MS4A1", "CD74", "CD37"]
+    b_no_cd74 = ["CD79A", "MS4A1", "CD37"]
+    oxidative = ["SOD1", "GPX1"]
+    myeloid = ["LYZ", "TYROBP", "CD68", "FCGR3A", "S100A8", "S100A9"]
+    rows = []
+
+    for sample in samples:
+        sample_dir = data_root / sample / f"{sample}-Flat_files_and_images"
+        expr_path = sample_dir / f"{sample}_exprMat_file.csv"
+        meta_path = sample_dir / f"{sample}_metadata_file.csv"
+        header = pd.read_csv(expr_path, nrows=0).columns
+        marker_cols = [
+            g for g in sorted(set(b_original + oxidative + myeloid)) if g in header
+        ]
+        expr = pd.read_csv(expr_path, usecols=["fov", "cell_ID", *marker_cols])
+        meta = pd.read_csv(
+            meta_path,
+            usecols=["fov", "cell_ID", "CenterX_global_px", "CenterY_global_px"],
+        )
+        cells = pd.merge(meta, expr, on=["fov", "cell_ID"], how="inner")
+        for gene in marker_cols:
+            cells[gene] = pd.to_numeric(cells[gene], errors="coerce").fillna(0.0)
+            cells[f"log_{gene}"] = np.log1p(cells[gene])
+        cells["b_original"] = cells[[f"log_{g}" for g in b_original]].mean(axis=1)
+        cells["b_no_cd74"] = cells[[f"log_{g}" for g in b_no_cd74]].mean(axis=1)
+        cells["oxidative"] = cells[[f"log_{g}" for g in oxidative]].mean(axis=1)
+        myeloid_used = [g for g in myeloid if g in marker_cols]
+        cells["myeloid"] = cells[[f"log_{g}" for g in myeloid_used]].mean(axis=1)
+        cells["grid_x"] = (cells["CenterX_global_px"] // 320).astype(int)
+        cells["grid_y"] = (cells["CenterY_global_px"] // 320).astype(int)
+        bins = (
+            cells.groupby(["grid_x", "grid_y"], as_index=False)
+            .agg(
+                b_original=("b_original", "mean"),
+                b_no_cd74=("b_no_cd74", "mean"),
+                oxidative=("oxidative", "mean"),
+                myeloid=("myeloid", "mean"),
+                n_cells=("cell_ID", "size"),
+            )
+        )
+        bins = bins[bins["n_cells"] >= 16].copy()
+        rows.append(
+            {
+                "sample": sample,
+                "n_cells": len(cells),
+                "n_spatial_bins": len(bins),
+                "original_B_markers": ",".join(b_original),
+                "CD74_excluded_B_markers": ",".join(b_no_cd74),
+                "oxidative_markers": ",".join(oxidative),
+                "myeloid_markers": ",".join(myeloid_used),
+                "pearson_original_B_vs_oxidative": bins["b_original"].corr(
+                    bins["oxidative"], method="pearson"
+                ),
+                "pearson_CD74_excluded_B_vs_oxidative": bins["b_no_cd74"].corr(
+                    bins["oxidative"], method="pearson"
+                ),
+                "partial_pearson_CD74_excluded_adjusted_myeloid": partial_corr(
+                    bins["b_no_cd74"], bins["oxidative"], bins["myeloid"]
+                ),
+                "spearman_original_B_vs_oxidative": bins["b_original"].corr(
+                    bins["oxidative"], method="spearman"
+                ),
+                "spearman_CD74_excluded_B_vs_oxidative": bins["b_no_cd74"].corr(
+                    bins["oxidative"], method="spearman"
+                ),
+                "partial_spearman_CD74_excluded_adjusted_myeloid": partial_corr(
+                    bins["b_no_cd74"],
+                    bins["oxidative"],
+                    bins["myeloid"],
+                    rank=True,
+                ),
+            }
+        )
+
+    summary = pd.DataFrame(rows)
+    summary.to_csv(OUT / "Spatial_CosMx_CD74_Myeloid_Sensitivity.csv", index=False)
+    metric_cols = [c for c in summary.columns if "pearson" in c or "spearman" in c]
+    aggregate = []
+    for metric in metric_cols:
+        vals = summary[metric].astype(float)
+        aggregate.append(
+            {
+                "metric": metric,
+                "n_samples": vals.notna().sum(),
+                "mean_correlation": vals.mean(),
+                "median_correlation": vals.median(),
+                "positive_samples": int((vals > 0).sum()),
+                "negative_samples": int((vals < 0).sum()),
+            }
+        )
+    pd.DataFrame(aggregate).to_csv(
+        OUT / "Spatial_CosMx_CD74_Myeloid_Aggregate.csv", index=False
+    )
+
+
+def run_scrna_threshold_sensitivity() -> None:
+    cells = pd.read_csv(
+        SOURCE_ROOT / "GSE148071_LUSC_scRNA_cell_level_selected_scores.csv"
+    )
+    cells = cells[cells["assigned_cell_type"].isin(["B cells", "Plasma cells"])].copy()
+    score_cols = [
+        "UPR_ER_stress_score",
+        "NRF2_redox_score",
+        "Ribosome_translation_score",
+        "Apoptosis_DDR_score",
+    ]
+    sample_rows = []
+    groups = ["B cells", "Plasma cells", "B-lineage combined"]
+    methods = [
+        "within_sample_positive_median",
+        "within_sample_positive_quartiles",
+        "detected_vs_undetected",
+    ]
+
+    for sample, sample_df in cells.groupby("sample"):
+        for cell_group in groups:
+            sub = (
+                sample_df
+                if cell_group == "B-lineage combined"
+                else sample_df[sample_df["assigned_cell_type"] == cell_group]
+            )
+            if len(sub) < 10:
+                continue
+            park7 = sub["PARK7_log2CPM"].astype(float)
+            positive = park7[park7 > 0]
+            for method in methods:
+                if method == "within_sample_positive_median":
+                    if len(positive) < 6:
+                        continue
+                    cutoff = float(positive.median())
+                    high = sub[park7 >= cutoff]
+                    low = sub[park7 < cutoff]
+                    lower_cutoff = np.nan
+                    upper_cutoff = cutoff
+                elif method == "within_sample_positive_quartiles":
+                    if len(positive) < 12:
+                        continue
+                    q1, q3 = positive.quantile([0.25, 0.75]).astype(float)
+                    high = sub[park7 >= q3]
+                    low = sub[(park7 > 0) & (park7 <= q1)]
+                    lower_cutoff = float(q1)
+                    upper_cutoff = float(q3)
+                else:
+                    high = sub[park7 > 0]
+                    low = sub[park7 == 0]
+                    lower_cutoff = 0.0
+                    upper_cutoff = 0.0
+                if len(high) < 3 or len(low) < 3:
+                    continue
+                for score in score_cols:
+                    sample_rows.append(
+                        {
+                            "sample": sample,
+                            "cell_group": cell_group,
+                            "threshold_method": method,
+                            "score": score,
+                            "n_high": len(high),
+                            "n_low": len(low),
+                            "lower_cutoff": lower_cutoff,
+                            "upper_cutoff": upper_cutoff,
+                            "mean_high": high[score].mean(),
+                            "mean_low": low[score].mean(),
+                            "delta_high_minus_low": high[score].mean()
+                            - low[score].mean(),
+                            "mannwhitney_p": stats.mannwhitneyu(
+                                high[score], low[score], alternative="two-sided"
+                            ).pvalue,
+                        }
+                    )
+
+    per_sample = pd.DataFrame(sample_rows)
+    per_sample["mannwhitney_fdr"] = per_sample.groupby(
+        ["sample", "cell_group", "threshold_method"]
+    )["mannwhitney_p"].transform(bh_fdr)
+    per_sample.to_csv(
+        OUT / "scRNA_PARK7_Threshold_Sensitivity_PerSample.csv", index=False
+    )
+
+    meta_rows = []
+    for keys, sub in per_sample.groupby(["cell_group", "threshold_method", "score"]):
+        deltas = sub["delta_high_minus_low"].dropna().astype(float)
+        p = (
+            stats.wilcoxon(deltas).pvalue
+            if len(deltas) >= 2 and not np.allclose(deltas, 0)
+            else np.nan
+        )
+        meta_rows.append(
+            {
+                "cell_group": keys[0],
+                "threshold_method": keys[1],
+                "score": keys[2],
+                "n_samples": len(deltas),
+                "median_delta_high_minus_low": deltas.median(),
+                "mean_delta_high_minus_low": deltas.mean(),
+                "positive_samples": int((deltas > 0).sum()),
+                "negative_samples": int((deltas < 0).sum()),
+                "wilcoxon_signed_rank_p": p,
+            }
+        )
+    meta = pd.DataFrame(meta_rows)
+    meta["wilcoxon_fdr"] = meta.groupby("threshold_method")[
+        "wilcoxon_signed_rank_p"
+    ].transform(bh_fdr)
+    meta.to_csv(OUT / "scRNA_PARK7_Threshold_Sensitivity_Meta.csv", index=False)
+
+
+def parse_stage(value: object) -> str | float:
+    text = str(value).strip().upper()
+    if not text or text in {"NAN", "NOT REPORTED", "STAGE X", "UNKNOWN"}:
+        return np.nan
+    if text.startswith("STAGE IV"):
+        return "IV"
+    if text.startswith("STAGE III"):
+        return "III"
+    if text.startswith("STAGE II"):
+        return "II"
+    if text.startswith("STAGE I"):
+        return "I"
+    return np.nan
+
+
+def fit_cox(frame: pd.DataFrame, covariates: list[str], model: str) -> pd.DataFrame:
+    from lifelines import CoxPHFitter
+
+    d = frame[["OS_time", "OS_event", *covariates]].dropna().copy()
+    cph = CoxPHFitter(penalizer=0.001)
+    cph.fit(d, duration_col="OS_time", event_col="OS_event")
+    out = cph.summary.reset_index().rename(columns={"covariate": "term"})
+    out.insert(0, "model", model)
+    out.insert(1, "n", len(d))
+    out.insert(2, "events", int(d["OS_event"].sum()))
+    return out[
+        [
+            "model",
+            "n",
+            "events",
+            "term",
+            "coef",
+            "exp(coef)",
+            "exp(coef) lower 95%",
+            "exp(coef) upper 95%",
+            "p",
+        ]
+    ]
+
+
+def run_tcga_survival() -> None:
+    modules = pd.read_csv(SOURCE_ROOT / "TCGA_LUSC_selected_expression_modules.csv")
+    survival = pd.read_csv(PROJECT_ROOT / "TCGA" / "TCGA-LUSC.survival.tsv", sep="\t")
+    clinical = pd.read_csv(
+        PROJECT_ROOT / "TCGA" / "TCGA-LUSC.clinical.tsv",
+        sep="\t",
+        low_memory=False,
+    )
+
+    survival = survival[
+        survival["sample"].astype(str).str.contains(r"-01[A-Z]$", regex=True)
+    ].copy()
+    survival = survival.sort_values("OS.time", ascending=False).drop_duplicates(
+        "_PATIENT"
+    )
+    survival = survival.rename(
+        columns={"_PATIENT": "TCGA_patient", "OS.time": "OS_time", "OS": "OS_event"}
+    )
+
+    clinical = clinical[
+        clinical["sample"].astype(str).str.contains(r"-01[A-Z]$", regex=True)
+    ].copy()
+    clinical["TCGA_patient"] = clinical["submitter_id"].astype(str)
+    clinical = clinical.drop_duplicates("TCGA_patient")
+    clinical["age"] = pd.to_numeric(
+        clinical["age_at_index.demographic"], errors="coerce"
+    )
+    clinical["pack_years"] = pd.to_numeric(
+        clinical["pack_years_smoked.exposures"], errors="coerce"
+    )
+    clinical["male"] = (
+        clinical["gender.demographic"].astype(str).str.lower().eq("male").astype(float)
+    )
+    clinical["stage"] = clinical["ajcc_pathologic_stage.diagnoses"].map(parse_stage)
+
+    merged = (
+        modules.merge(
+            survival[["TCGA_patient", "OS_time", "OS_event"]], on="TCGA_patient"
+        )
+        .merge(
+            clinical[
+                ["TCGA_patient", "age", "pack_years", "male", "stage"]
+            ],
+            on="TCGA_patient",
+            how="left",
+        )
+        .copy()
+    )
+    merged["PARK7_z"] = (
+        merged["PARK7"] - merged["PARK7"].mean()
+    ) / merged["PARK7"].std(ddof=0)
+    merged["NRF2_redox_z"] = (
+        merged["NRF2_redox_marker_module"]
+        - merged["NRF2_redox_marker_module"].mean()
+    ) / merged["NRF2_redox_marker_module"].std(ddof=0)
+    merged["age_per_10y"] = merged["age"] / 10.0
+    merged["pack_years_per_10"] = merged["pack_years"] / 10.0
+    stage_dummies = pd.get_dummies(merged["stage"], prefix="stage", dtype=float)
+    merged = pd.concat([merged, stage_dummies], axis=1)
+    stage_covariates = [
+        c for c in ["stage_II", "stage_III", "stage_IV"] if c in merged.columns
+    ]
+
+    outputs = [
+        fit_cox(merged, ["PARK7_z"], "Univariable"),
+        fit_cox(
+            merged,
+            ["PARK7_z", "age_per_10y", "male", *stage_covariates],
+            "Clinical adjusted",
+        ),
+        fit_cox(
+            merged,
+            [
+                "PARK7_z",
+                "age_per_10y",
+                "male",
+                *stage_covariates,
+                "pack_years_per_10",
+                "NRF2_redox_z",
+            ],
+            "Clinical + smoking + NRF2/redox adjusted",
+        ),
+    ]
+    pd.concat(outputs, ignore_index=True).to_csv(
+        OUT / "TCGA_LUSC_PARK7_Cox_Models.csv", index=False
+    )
+    merged.to_csv(OUT / "TCGA_LUSC_PARK7_Cox_Analysis_Data.csv", index=False)
+
+
+def export_coloc_posteriors() -> None:
+    coloc = pd.read_csv(SOURCE_ROOT / "PARK7_Coloc_ABF_Prior_Sensitivity.csv")
+    selected = coloc[
+        coloc["cell"].isin(["bin", "bmem"])
+        & coloc["histology"].isin(["LUSC", "LUAD"])
+        & np.isclose(coloc["p1"], 1e-4)
+        & np.isclose(coloc["p2"], 1e-4)
+        & np.isclose(coloc["p12"], 1e-5)
+    ].copy()
+    selected["cell_type"] = selected["cell"].map(
+        {"bin": "Intermediate B cells", "bmem": "Memory B cells"}
+    )
+    selected[
+        [
+            "cell_type",
+            "histology",
+            "n_shared_snps",
+            "PP0",
+            "PP1",
+            "PP2",
+            "PP3",
+            "PP4",
+            "PP4_over_PP3_plus_PP4",
+        ]
+    ].to_csv(OUT / "PARK7_Coloc_Complete_Posteriors.csv", index=False)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Reproduce the PARK7 major-revision analysis tables."
+    )
+    parser.add_argument("--source-root", type=Path, default=SOURCE_ROOT)
+    parser.add_argument("--project-root", type=Path, default=PROJECT_ROOT)
+    parser.add_argument("--cosmx-root", type=Path, default=COSMX_ROOT)
+    parser.add_argument("--out", type=Path, default=OUT)
+    parser.add_argument(
+        "--steps",
+        nargs="+",
+        choices=["ld", "cosmx", "scrna", "tcga", "coloc"],
+        default=["scrna", "coloc"],
+        help=(
+            "Analyses to run. The default steps use inputs included in the "
+            "repository; LD, CosMx, and TCGA require external resources."
+        ),
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    global SOURCE_ROOT, PROJECT_ROOT, COSMX_ROOT, OUT
+    args = parse_args()
+    SOURCE_ROOT = args.source_root.resolve()
+    PROJECT_ROOT = args.project_root.resolve()
+    COSMX_ROOT = args.cosmx_root.resolve()
+    OUT = args.out.resolve()
+    OUT.mkdir(parents=True, exist_ok=True)
+
+    functions = {
+        "ld": run_ld_audit,
+        "cosmx": run_cosmx_sensitivity,
+        "scrna": run_scrna_threshold_sensitivity,
+        "tcga": run_tcga_survival,
+        "coloc": export_coloc_posteriors,
+    }
+    for step in args.steps:
+        functions[step]()
+    print(f"Major-revision analyses saved to: {OUT}")
+
+
+if __name__ == "__main__":
+    main()

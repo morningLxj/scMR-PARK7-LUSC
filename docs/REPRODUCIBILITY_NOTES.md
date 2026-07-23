@@ -1,19 +1,67 @@
 # Reproducibility Notes
 
-## Recommended Use
+## Included-input analyses
 
-1. Inspect `data/source_data_csv/Source_Data_CSV_Manifest.csv` to map each source-data file to its manuscript item.
-2. Use `figures/main/` and `figures/supplementary/` as the submitted visual outputs.
-3. Use `scripts/analysis/` as provenance code for the local final submission workflow.
-4. Run `python scripts/check_repository_integrity.py` to verify that the repository contains the expected files.
+The default analysis command reruns:
 
-## Script Caveats
+- GSE148071 B-lineage PARK7 threshold sensitivity.
+- Export of complete PARK7 PP0-PP4 posteriors at the prespecified prior.
 
-The three scripts in `scripts/analysis/` were copied from the final local workflow. They document how public scRNA-seq, TCGA, IHC ROI, CMap, MR robustness, spatial boundary, and evidence-boundary artifacts were produced and synchronized during submission assembly.
+```bash
+python scripts/revision/run_major_revision_analyses.py
+```
 
-Because they were originally run in a local project workspace, they may contain local path constants and package-synchronization steps. To rerun them elsewhere, edit the path constants near the top of each script and provide the required raw public inputs.
+## External-resource analyses
 
-## Claim-Boundary Caveat
+Select additional steps with `--steps`:
 
-The source data support candidate prioritization and evidence-boundary assessment. They should not be used to claim direct functional causality, direct PARK7-positive B-cell spatial localization, B-cell-specific PARK7 protein localization, therapeutic efficacy, or clinical biomarker validation.
+```bash
+python scripts/revision/run_major_revision_analyses.py \
+  --steps ld cosmx scrna tcga coloc \
+  --project-root /path/to/external/project \
+  --cosmx-root /path/to/cosmx/samples
+```
 
+Expected external layout under `--project-root`:
+
+```text
+plink.exe
+Reference/
+  g1000_eur.bed
+  g1000_eur.bim
+  g1000_eur.fam
+TCGA/
+  TCGA-LUSC.survival.tsv
+  TCGA-LUSC.clinical.tsv
+```
+
+`--cosmx-root` should contain the five sample directories used in the manuscript:
+
+```text
+Lung6
+Lung9_Rep2
+Lung12
+Lung13
+Lung5_Rep3
+```
+
+Environment variables may be used instead:
+
+- `PARK7_SOURCE_ROOT`
+- `PARK7_PROJECT_ROOT`
+- `PARK7_COSMX_ROOT`
+- `PARK7_OUT`
+- `PARK7_RESULTS_ROOT`
+- `PARK7_FIGURE_OUT`
+
+## Figure regeneration
+
+```bash
+python scripts/revision/build_revision_figures.py
+```
+
+The figure script reads `data/inputs/` and `data/revision_results/` by default.
+
+## Interpretation
+
+The scripts reproduce reported computations from retained processed inputs. They do not convert the correlated regional PARK7 variant set into independent instruments and must not be used to claim causality, high-confidence colocalization, B-cell-specific localization, prognosis, or therapy.

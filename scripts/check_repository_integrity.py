@@ -1,72 +1,105 @@
 from __future__ import annotations
 
+import csv
+import math
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
-
-EXPECTED = {
-    "main_figures": 5,
-    "supplementary_figures": 19,
-    "source_data_files": 61,
-    "analysis_scripts": 3,
-}
-
-
-REQUIRED_FILES = [
+REQUIRED = [
     "README.md",
-    "requirements.txt",
-    "environment.yml",
-    "docs/DATA_AVAILABILITY.md",
-    "docs/REPRODUCIBILITY_NOTES.md",
-    "data/source_data_csv/Source_Data_CSV_Manifest.csv",
-    "data/source_data_csv/Table1_MR_Summary_Source.csv",
-    "data/source_data_csv/SupplementaryTableS8_Evidence_Reproducibility_Matrix.csv",
-    "data/source_workbooks/Source_Data_and_Tables.xlsx",
-    "figures/main/Figure_1.tif",
-    "figures/main/Figure_5.tif",
-    "figures/supplementary/S1.tif",
-    "figures/supplementary/S19_Network_scRNA_Control_Context.tif",
-    "scripts/analysis/01_public_scrna_tcga_ihc_cmap_workflow.py",
-    "scripts/analysis/02_extended_public_validation_and_mr_sensitivity.py",
-    "scripts/analysis/03_evidence_boundary_audit_figures.py",
+    "data/README.md",
+    "data/inputs/PARK7_PerInstrument_F_Statistics.csv",
+    "data/inputs/PARK7_LeaveOneOut_Source.csv",
+    "data/inputs/GSE148071_LUSC_scRNA_cell_level_selected_scores.csv",
+    "data/inputs/PARK7_Coloc_ABF_Prior_Sensitivity.csv",
+    "data/inputs/Visium_Spatial_CoLocalization_Scores.csv",
+    "data/revision_results/MR_PARK7_LD_Audit_Summary.csv",
+    "data/revision_results/MR_PARK7_LD_Pruned_Estimates.csv",
+    "data/revision_results/PARK7_Coloc_Complete_Posteriors.csv",
+    "data/revision_results/Spatial_CosMx_CD74_Myeloid_Sensitivity.csv",
+    "data/revision_results/scRNA_PARK7_Threshold_Sensitivity_Meta.csv",
+    "data/revision_results/TCGA_LUSC_PARK7_Cox_Models.csv",
+    "figures/main/Figure1_Cross_Modal_Assessment.png",
+    "figures/main/Figure2_PARK7_LD_Audit.png",
+    "figures/main/Figure3_PARK7_Colocalization_Posteriors.png",
+    "figures/main/Figure4_Visium_Spatial_Constraint.png",
+    "figures/supplementary/Supplementary_Figure_S1_PARK7_IHC.tif",
+    "scripts/revision/run_major_revision_analyses.py",
+    "scripts/revision/build_revision_figures.py",
 ]
 
 
-def count_files(path: str, pattern: str = "*") -> int:
-    return sum(1 for p in (ROOT / path).glob(pattern) if p.is_file())
+def read_rows(relative: str) -> list[dict[str, str]]:
+    with (ROOT / relative).open(newline="", encoding="utf-8-sig") as handle:
+        return list(csv.DictReader(handle))
 
 
-def main() -> int:
-    missing = [rel for rel in REQUIRED_FILES if not (ROOT / rel).exists()]
-    counts = {
-        "main_figures": count_files("figures/main", "*.tif"),
-        "supplementary_figures": count_files("figures/supplementary", "*.tif"),
-        "source_data_files": count_files("data/source_data_csv"),
-        "analysis_scripts": count_files("scripts/analysis", "*.py"),
-    }
+def close(actual: float, expected: float, tolerance: float = 5e-4) -> bool:
+    return math.isclose(actual, expected, rel_tol=tolerance, abs_tol=tolerance)
 
-    print("Repository integrity check")
-    print(f"Root: {ROOT}")
-    for key, value in counts.items():
-        expected = EXPECTED[key]
-        status = "OK" if value == expected else f"expected {expected}"
-        print(f"- {key}: {value} ({status})")
 
-    if missing:
-        print("\nMissing required files:")
-        for rel in missing:
-            print(f"- {rel}")
-        return 1
+def main() -> None:
+    missing = [path for path in REQUIRED if not (ROOT / path).is_file()]
+    empty = [
+        path
+        for path in REQUIRED
+        if (ROOT / path).is_file() and (ROOT / path).stat().st_size == 0
+    ]
+    if missing or empty:
+        raise SystemExit(f"Missing files: {missing}; empty files: {empty}")
 
-    bad_counts = {k: v for k, v in counts.items() if v != EXPECTED[k]}
-    if bad_counts:
-        return 1
+    forbidden_suffixes = {".doc", ".docx", ".pdf", ".ppt", ".pptx", ".zip"}
+    forbidden = [
+        path.relative_to(ROOT).as_posix()
+        for path in ROOT.rglob("*")
+        if path.is_file()
+        and ".git" not in path.parts
+        and path.suffix.lower() in forbidden_suffixes
+    ]
+    if forbidden:
+        raise SystemExit(f"Submission/private files found in repository: {forbidden}")
 
-    print("\nAll required files are present.")
-    return 0
+    audit = read_rows(
+        "data/revision_results/MR_PARK7_LD_Audit_Summary.csv"
+    )[0]
+    assert int(float(audit["requested_instruments"])) == 90
+    assert int(float(audit["instruments_in_1000G_EUR"])) == 89
+    assert close(float(audit["median_pairwise_r2"]), 0.645)
+    assert int(float(audit["pairs_r2_ge_0_1"])) == 3916
+
+    pruned = read_rows(
+        "data/revision_results/MR_PARK7_LD_Pruned_Estimates.csv"
+    )
+    assert all(int(float(row["n_instruments"])) == 1 for row in pruned)
+    assert all(close(float(row["OR"]), 1.124, tolerance=1e-3) for row in pruned)
+
+    coloc = read_rows(
+        "data/revision_results/PARK7_Coloc_Complete_Posteriors.csv"
+    )
+    lusc = [row for row in coloc if row["histology"] == "LUSC"]
+    assert len(lusc) == 2
+    assert all(float(row["PP1"]) > float(row["PP4"]) for row in lusc)
+
+    spatial = read_rows(
+        "data/revision_results/Spatial_CosMx_CD74_Myeloid_Sensitivity.csv"
+    )
+    assert len(spatial) == 5
+
+    oversized = [
+        path.relative_to(ROOT).as_posix()
+        for path in ROOT.rglob("*")
+        if path.is_file() and path.stat().st_size >= 100 * 1024 * 1024
+    ]
+    if oversized:
+        raise SystemExit(f"Files at or above GitHub's 100 MB limit: {oversized}")
+
+    print(
+        "Repository integrity check passed: required files, claim-critical "
+        "values, privacy exclusions, and size limits are consistent."
+    )
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
