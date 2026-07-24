@@ -16,6 +16,9 @@ REQUIRED = [
     "data/inputs/GSE148071_LUSC_scRNA_cell_level_selected_scores.csv",
     "data/inputs/PARK7_Coloc_ABF_Prior_Sensitivity.csv",
     "data/inputs/Visium_Spatial_CoLocalization_Scores.csv",
+    "data/inputs/TCGA_LUSC_NRF2_Pathway_Mutation_Status.csv",
+    "data/inputs/TCGA_LUSC_NRF2_Pathway_Mutation_Events.csv",
+    "data/inputs/TCGA_LUSC_NRF2_Pathway_Mutation_Provenance.csv",
     "data/revision_results/MR_PARK7_LD_Audit_Summary.csv",
     "data/revision_results/MR_PARK7_LD_Pruned_Estimates.csv",
     "data/revision_results/MR_PARK7_Outcome_Provenance.csv",
@@ -23,15 +26,21 @@ REQUIRED = [
     "data/revision_results/PARK7_Coloc_Region_Provenance.csv",
     "data/revision_results/Spatial_CosMx_CD74_Myeloid_Sensitivity.csv",
     "data/revision_results/Spatial_Dataset_Sample_Specification.csv",
+    "data/revision_results/Spatial_Feature_Coverage_Audit.csv",
     "data/revision_results/Visium_Threshold_BlockPermutation_Sensitivity.csv",
     "data/revision_results/scRNA_PARK7_Threshold_Sensitivity_Meta.csv",
+    "data/revision_results/Restricted_38_Pair_MR_Source_Table.csv",
     "data/revision_results/TCGA_LUSC_PARK7_Cox_Models.csv",
+    "data/revision_results/TCGA_LUSC_DJ1_RPPA_Cox_Models.csv",
+    "data/revision_results/TCGA_LUSC_PARK7_RNA_DJ1_RPPA_Correlation.csv",
+    "data/revision_results/TCGA_LUSC_NRF2_Pathway_Mutation_Summary.csv",
     "figures/main/Figure1_Cross_Modal_Assessment.png",
     "figures/main/Figure2_PARK7_LD_Audit.png",
     "figures/main/Figure3_PARK7_Colocalization_Posteriors.png",
     "figures/main/Figure4_Visium_Spatial_Constraint.png",
     "figures/supplementary/Supplementary_Figure_S1_PARK7_IHC.tif",
     "scripts/revision/run_major_revision_analyses.py",
+    "scripts/revision/prepare_additional_nonexperimental_evidence.py",
     "scripts/revision/build_revision_figures.py",
 ]
 
@@ -146,6 +155,83 @@ def main() -> None:
         0.0111,
         tolerance=1e-3,
     )
+
+    restricted_mr = read_rows(
+        "data/revision_results/Restricted_38_Pair_MR_Source_Table.csv"
+    )
+    assert len(restricted_mr) == 38
+    assert len({row["gene"] for row in restricted_mr}) == 12
+    assert len({row["cell"] for row in restricted_mr}) == 14
+
+    spatial_coverage = read_rows(
+        "data/revision_results/Spatial_Feature_Coverage_Audit.csv"
+    )
+    assert len(spatial_coverage) == 2
+    assert all(
+        row["PARK7_measured"].lower() == "false"
+        for row in spatial_coverage
+    )
+    visium_coverage = [
+        row for row in spatial_coverage if row["resource"].startswith("10x Visium")
+    ][0]
+    cosmx_coverage = [
+        row for row in spatial_coverage if row["resource"].startswith("CosMx")
+    ][0]
+    assert int(visium_coverage["feature_count"]) == 18085
+    assert int(visium_coverage["analysis_unit_count"]) == 3858
+    assert int(cosmx_coverage["feature_count"]) == 960
+    assert int(cosmx_coverage["analysis_unit_count"]) == 501403
+
+    mutation_status = read_rows(
+        "data/inputs/TCGA_LUSC_NRF2_Pathway_Mutation_Status.csv"
+    )
+    assert len(mutation_status) == 490
+    assert sum(int(row["pathway_mutated"]) for row in mutation_status) == 134
+    assert sum(int(row["KEAP1_mutated"]) for row in mutation_status) == 51
+    assert sum(int(row["NFE2L2_mutated"]) for row in mutation_status) == 69
+    assert sum(int(row["CUL3_mutated"]) for row in mutation_status) == 22
+
+    rna_models = [
+        row
+        for row in read_rows(
+            "data/revision_results/TCGA_LUSC_PARK7_Cox_Models.csv"
+        )
+        if row["term"] == "PARK7_z"
+    ]
+    assert len(rna_models) == 5
+    full_rna = [
+        row
+        for row in rna_models
+        if row["model"]
+        == "Clinical + smoking + NRF2/redox + pathway mutation adjusted"
+    ][0]
+    assert int(full_rna["n"]) == 399
+    assert close(float(full_rna["exp(coef)"]), 0.976, tolerance=1e-3)
+
+    protein_models = [
+        row
+        for row in read_rows(
+            "data/revision_results/TCGA_LUSC_DJ1_RPPA_Cox_Models.csv"
+        )
+        if row["term"] == "DJ1_z"
+    ]
+    assert len(protein_models) == 4
+    univariable_protein = [
+        row for row in protein_models if row["model"] == "Univariable"
+    ][0]
+    assert int(univariable_protein["n"]) == 323
+    assert close(
+        float(univariable_protein["exp(coef)"]),
+        1.026,
+        tolerance=1e-3,
+    )
+
+    rna_protein = read_rows(
+        "data/revision_results/TCGA_LUSC_PARK7_RNA_DJ1_RPPA_Correlation.csv"
+    )
+    pearson = [row for row in rna_protein if row["method"] == "Pearson"][0]
+    assert int(pearson["n"]) == 320
+    assert close(float(pearson["estimate"]), 0.526, tolerance=1e-3)
 
     oversized = [
         path.relative_to(ROOT).as_posix()

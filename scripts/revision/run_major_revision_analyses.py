@@ -650,11 +650,18 @@ def parse_stage(value: object) -> str | float:
 
 def fit_cox(frame: pd.DataFrame, covariates: list[str], model: str) -> pd.DataFrame:
     from lifelines import CoxPHFitter
+    from lifelines.statistics import proportional_hazard_test
 
     d = frame[["OS_time", "OS_event", *covariates]].dropna().copy()
-    cph = CoxPHFitter(penalizer=0.001)
+    cph = CoxPHFitter()
     cph.fit(d, duration_col="OS_time", event_col="OS_event")
     out = cph.summary.reset_index().rename(columns={"covariate": "term"})
+    ph = (
+        proportional_hazard_test(cph, d, time_transform="rank")
+        .summary["p"]
+        .rename("proportional_hazards_p")
+    )
+    out = out.merge(ph, left_on="term", right_index=True, how="left")
     out.insert(0, "model", model)
     out.insert(1, "n", len(d))
     out.insert(2, "events", int(d["OS_event"].sum()))
@@ -669,12 +676,29 @@ def fit_cox(frame: pd.DataFrame, covariates: list[str], model: str) -> pd.DataFr
             "exp(coef) lower 95%",
             "exp(coef) upper 95%",
             "p",
+            "proportional_hazards_p",
         ]
     ]
 
 
+def add_stage_covariates(frame: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    result = frame.copy()
+    stage_dummies = pd.get_dummies(result["stage"], prefix="stage", dtype=float)
+    stage_dummies.loc[result["stage"].isna(), :] = np.nan
+    result = pd.concat([result, stage_dummies], axis=1)
+    covariates = [
+        column
+        for column in ["stage_II", "stage_III", "stage_IV"]
+        if column in result.columns
+    ]
+    return result, covariates
+
+
 def run_tcga_survival() -> None:
     modules = pd.read_csv(SOURCE_ROOT / "TCGA_LUSC_selected_expression_modules.csv")
+    mutation_status = pd.read_csv(
+        SOURCE_ROOT / "TCGA_LUSC_NRF2_Pathway_Mutation_Status.csv"
+    )
     survival = pd.read_csv(PROJECT_ROOT / "TCGA" / "TCGA-LUSC.survival.tsv", sep="\t")
     clinical = pd.read_csv(
         PROJECT_ROOT / "TCGA" / "TCGA-LUSC.clinical.tsv",
@@ -707,15 +731,21 @@ def run_tcga_survival() -> None:
         clinical["gender.demographic"].astype(str).str.lower().eq("male").astype(float)
     )
     clinical["stage"] = clinical["ajcc_pathologic_stage.diagnoses"].map(parse_stage)
+    clinical = clinical[
+        ["TCGA_patient", "age", "pack_years", "male", "stage"]
+    ].copy()
 
     merged = (
         modules.merge(
             survival[["TCGA_patient", "OS_time", "OS_event"]], on="TCGA_patient"
         )
         .merge(
-            clinical[
-                ["TCGA_patient", "age", "pack_years", "male", "stage"]
-            ],
+            clinical,
+            on="TCGA_patient",
+            how="left",
+        )
+        .merge(
+            mutation_status,
             on="TCGA_patient",
             how="left",
         )
@@ -730,11 +760,7 @@ def run_tcga_survival() -> None:
     ) / merged["NRF2_redox_marker_module"].std(ddof=0)
     merged["age_per_10y"] = merged["age"] / 10.0
     merged["pack_years_per_10"] = merged["pack_years"] / 10.0
-    stage_dummies = pd.get_dummies(merged["stage"], prefix="stage", dtype=float)
-    merged = pd.concat([merged, stage_dummies], axis=1)
-    stage_covariates = [
-        c for c in ["stage_II", "stage_III", "stage_IV"] if c in merged.columns
-    ]
+    merged, stage_covariates = add_stage_covariates(merged)
 
     outputs = [
         fit_cox(merged, ["PARK7_z"], "Univariable"),
@@ -755,12 +781,175 @@ def run_tcga_survival() -> None:
             ],
             "Clinical + smoking + NRF2/redox adjusted",
         ),
+        fit_cox(
+            merged,
+            [
+                "PARK7_z",
+                "age_per_10y",
+                "male",
+                *stage_covariates,
+                "pathway_mutated",
+            ],
+            "Clinical + KEAP1/NFE2L2/CUL3 mutation adjusted",
+        ),
+        fit_cox(
+            merged,
+            [
+                "PARK7_z",
+                "age_per_10y",
+                "male",
+                *stage_covariates,
+                "pack_years_per_10",
+                "NRF2_redox_z",
+                "pathway_mutated",
+            ],
+            "Clinical + smoking + NRF2/redox + pathway mutation adjusted",
+        ),
     ]
     pd.concat(outputs, ignore_index=True).to_csv(
         OUT / "TCGA_LUSC_PARK7_Cox_Models.csv", index=False
     )
-    merged.to_csv(OUT / "TCGA_LUSC_PARK7_Cox_Analysis_Data.csv", index=False)
 
+    protein_wide = pd.read_csv(
+        PROJECT_ROOT / "TCGA" / "TCGA-LUSC.protein.tsv",
+        sep="\t",
+    )
+    dj1 = protein_wide.loc[
+        protein_wide["peptide_target"].astype(str).eq("DJ1")
+    ]
+    if len(dj1) != 1:
+        raise ValueError("Expected one DJ1 row in the TCGA-LUSC RPPA table.")
+    protein = dj1.drop(columns="peptide_target").T.reset_index()
+    protein.columns = ["sample", "DJ1_RPPA"]
+    protein["TCGA_patient"] = protein["sample"].astype(str).str.slice(0, 12)
+    protein["DJ1_RPPA"] = pd.to_numeric(protein["DJ1_RPPA"], errors="coerce")
+    protein = (
+        protein.sort_values("sample")
+        .drop_duplicates("TCGA_patient")
+        .merge(
+            survival[["TCGA_patient", "OS_time", "OS_event"]],
+            on="TCGA_patient",
+        )
+        .merge(clinical, on="TCGA_patient", how="left")
+        .merge(mutation_status, on="TCGA_patient", how="left")
+    )
+    protein["DJ1_z"] = (
+        protein["DJ1_RPPA"] - protein["DJ1_RPPA"].mean()
+    ) / protein["DJ1_RPPA"].std(ddof=0)
+    protein["age_per_10y"] = protein["age"] / 10.0
+    protein["pack_years_per_10"] = protein["pack_years"] / 10.0
+    protein, protein_stage_covariates = add_stage_covariates(protein)
+
+    protein_outputs = [
+        fit_cox(protein, ["DJ1_z"], "Univariable"),
+        fit_cox(
+            protein,
+            ["DJ1_z", "age_per_10y", "male", *protein_stage_covariates],
+            "Clinical adjusted",
+        ),
+        fit_cox(
+            protein,
+            [
+                "DJ1_z",
+                "age_per_10y",
+                "male",
+                *protein_stage_covariates,
+                "pathway_mutated",
+            ],
+            "Clinical + KEAP1/NFE2L2/CUL3 mutation adjusted",
+        ),
+        fit_cox(
+            protein,
+            [
+                "DJ1_z",
+                "age_per_10y",
+                "male",
+                *protein_stage_covariates,
+                "pack_years_per_10",
+                "pathway_mutated",
+            ],
+            "Clinical + smoking + pathway mutation adjusted",
+        ),
+    ]
+    pd.concat(protein_outputs, ignore_index=True).to_csv(
+        OUT / "TCGA_LUSC_DJ1_RPPA_Cox_Models.csv",
+        index=False,
+    )
+
+    matched = merged[["TCGA_patient", "PARK7"]].merge(
+        protein[["TCGA_patient", "DJ1_RPPA"]],
+        on="TCGA_patient",
+    )
+    matched = matched.dropna(subset=["PARK7", "DJ1_RPPA"])
+    pearson = stats.pearsonr(matched["PARK7"], matched["DJ1_RPPA"])
+    spearman = stats.spearmanr(matched["PARK7"], matched["DJ1_RPPA"])
+    pd.DataFrame(
+        [
+            {
+                "method": "Pearson",
+                "n": len(matched),
+                "estimate": pearson.statistic,
+                "p": pearson.pvalue,
+            },
+            {
+                "method": "Spearman",
+                "n": len(matched),
+                "estimate": spearman.statistic,
+                "p": spearman.pvalue,
+            },
+        ]
+    ).to_csv(
+        OUT / "TCGA_LUSC_PARK7_RNA_DJ1_RPPA_Correlation.csv",
+        index=False,
+    )
+
+    mutation_rows = [
+        {
+            "scope": "GDC masked-somatic-mutation coverage",
+            "metric": "covered_cases",
+            "value": len(mutation_status),
+        },
+        {
+            "scope": "GDC masked-somatic-mutation coverage",
+            "metric": "pathway_mutation_positive_cases",
+            "value": int(mutation_status["pathway_mutated"].sum()),
+        },
+    ]
+    for gene in ("KEAP1", "NFE2L2", "CUL3"):
+        mutation_rows.append(
+            {
+                "scope": "GDC masked-somatic-mutation coverage",
+                "metric": f"{gene}_mutation_positive_cases",
+                "value": int(mutation_status[f"{gene}_mutated"].sum()),
+            }
+        )
+    for scope, frame in [
+        ("PARK7 RNA survival cohort", merged),
+        ("DJ1 RPPA survival cohort", protein),
+    ]:
+        mutation_rows.extend(
+            [
+                {
+                    "scope": scope,
+                    "metric": "survival_cases",
+                    "value": len(frame),
+                },
+                {
+                    "scope": scope,
+                    "metric": "mutation_covered_cases",
+                    "value": int(frame["pathway_mutated"].notna().sum()),
+                },
+                {
+                    "scope": scope,
+                    "metric": "pathway_mutation_positive_cases",
+                    "value": int(frame["pathway_mutated"].fillna(0).sum()),
+                },
+            ]
+        )
+    pd.DataFrame(mutation_rows).to_csv(
+        OUT / "TCGA_LUSC_NRF2_Pathway_Mutation_Summary.csv",
+        index=False,
+    )
 
 def export_coloc_posteriors() -> None:
     coloc = pd.read_csv(SOURCE_ROOT / "PARK7_Coloc_ABF_Prior_Sensitivity.csv")

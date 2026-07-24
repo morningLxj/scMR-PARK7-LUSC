@@ -1,0 +1,12 @@
+scope,metric,value
+GDC masked-somatic-mutation coverage,covered_cases,490
+GDC masked-somatic-mutation coverage,pathway_mutation_positive_cases,134
+GDC masked-somatic-mutation coverage,KEAP1_mutation_positive_cases,51
+GDC masked-somatic-mutation coverage,NFE2L2_mutation_positive_cases,69
+GDC masked-somatic-mutation coverage,CUL3_mutation_positive_cases,22
+PARK7 RNA survival cohort,survival_cases,493
+PARK7 RNA survival cohort,mutation_covered_cases,479
+PARK7 RNA survival cohort,pathway_mutation_positive_cases,132
+DJ1 RPPA survival cohort,survival_cases,323
+DJ1 RPPA survival cohort,mutation_covered_cases,314
+DJ1 RPPA survival cohort,pathway_mutation_positive_cases,90

@@ -26,7 +26,11 @@ Key revision findings:
   marker overlap across six threshold definitions; within-block permutation
   support varied with threshold and block scale.
 - Adjusted CosMx associations were weak and heterogeneous.
-- Single-cell score associations depended on threshold, TCGA-LUSC survival models were null, and IHC was descriptive.
+- Single-cell score associations depended on threshold.
+- PARK7 RNA and DJ-1 RPPA values were moderately correlated in 320 matched
+  TCGA-LUSC tumors, but neither analyte was associated with overall survival
+  after clinical and KEAP1/NFE2L2/CUL3 mutation adjustment.
+- IHC remained descriptive and did not identify the stained cell type.
 
 ![Cross-modal evidence direction](figures/main/Figure1_Cross_Modal_Assessment.png)
 
@@ -76,7 +80,11 @@ Rebuild the four main figures from included processed inputs and revision result
 python scripts/revision/build_revision_figures.py
 ```
 
-The LD, CosMx, and TCGA steps require external resources that are not redistributed. See [Reproducibility Notes](docs/REPRODUCIBILITY_NOTES.md).
+The LD, CosMx, and TCGA steps require external resources that are not
+redistributed. The repository includes the retained 38-pair MR source table,
+spatial feature-coverage audit, and patient-level GDC pathway-mutation status
+used by the TCGA sensitivity models. See
+[Reproducibility Notes](docs/REPRODUCIBILITY_NOTES.md).
 
 ## Data and privacy boundaries
 

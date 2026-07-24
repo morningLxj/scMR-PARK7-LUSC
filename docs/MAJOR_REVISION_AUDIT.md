@@ -1,6 +1,6 @@
 # Major Revision Audit
 
-Revision date: 2026-07-23
+Revision date: 2026-07-24
 
 ## Genetic audit
 
@@ -41,7 +41,14 @@ PP1 dominated and PP4 was prior-sensitive, so a shared causal variant was not es
   significance was weaker at some alternative thresholds.
 - CosMx after CD74 exclusion and myeloid adjustment: mean partial Pearson r 0.146.
 - Single-cell: score associations changed by threshold.
-- TCGA-LUSC: PARK7 was not associated with overall survival in univariable or adjusted models.
+- TCGA-LUSC: PARK7 RNA and DJ-1 RPPA values were correlated across 320 matched
+  tumors (Pearson r 0.526), but neither was associated with overall survival
+  in univariable, clinical, or KEAP1/NFE2L2/CUL3 mutation-adjusted models.
+- GDC mutation adjustment used 490 covered cases and 134 cases with a
+  canonical HIGH/MODERATE KEAP1, NFE2L2, or CUL3 somatic mutation; cases
+  outside official mutation-call coverage were not classified as wild type.
+- Spatial feature audit: PARK7 was absent from the 18,085-feature Visium
+  matrix and the 960-gene CosMx panel.
 - IHC: tissue-level detectability only; no PARK7/B-cell-marker co-stain.
 
 ## Current claim

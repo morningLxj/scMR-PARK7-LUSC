@@ -35,6 +35,7 @@ Reference/
 TCGA/
   TCGA-LUSC.survival.tsv
   TCGA-LUSC.clinical.tsv
+  TCGA-LUSC.protein.tsv
 ```
 
 `--cosmx-root` should contain the five sample directories used in the manuscript:
@@ -67,6 +68,24 @@ The figure script reads `data/inputs/` and `data/revision_results/` by default.
 ## Interpretation
 
 The scripts reproduce reported computations from retained processed inputs. They do not convert the correlated regional PARK7 variant set into independent instruments and must not be used to claim causality, high-confidence colocalization, B-cell-specific localization, prognosis, or therapy.
+
+The TCGA step uses the included
+`data/inputs/TCGA_LUSC_NRF2_Pathway_Mutation_Status.csv`. A mutation-positive
+case has at least one canonical-transcript somatic SSM with VEP impact HIGH or
+MODERATE in KEAP1, NFE2L2, or CUL3. Mutation-negative status is assigned only
+to cases represented in the official GDC masked-somatic-mutation file
+coverage; cases outside that coverage are excluded from mutation-adjusted
+models. Clinical models use complete cases for age and pathologic stage.
+PARK7 RNA and DJ-1 RPPA values are standardized separately, and all reported
+hazard ratios are per standard deviation.
+
+The retained 38-pair MR table is exported as a source audit, not as a
+reconstructed complete screen. Its `q_bh_fdr` column applies only to those 38
+rows, and the non-PARK7 rows did not undergo the PARK7-specific LD audit.
+
+The feature-coverage audit reads the original Visium HDF5 feature list and the
+headers of all five CosMx expression matrices. PARK7 was absent from both
+panels; no spatial PARK7 value was imputed.
 
 The Visium sensitivity uses strict greater-than cutoffs at the global 50th,
 75th, 80th, 85th, and 90th percentiles plus a z-score-above-1 definition.

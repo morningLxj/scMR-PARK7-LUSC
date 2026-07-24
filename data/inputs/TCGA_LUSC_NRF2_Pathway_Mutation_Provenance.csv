@@ -1,0 +1,2 @@
+project,mutation_endpoint,coverage_endpoint,genes,event_definition,negative_definition,coverage_workflow,covered_cases,mutation_positive_cases,qualifying_events,access_date
+TCGA-LUSC,https://api.gdc.cancer.gov/ssm_occurrences,https://api.gdc.cancer.gov/files,KEAP1;NFE2L2;CUL3,Canonical-transcript somatic SSM with VEP impact HIGH or MODERATE,No qualifying event among cases represented in the official GDC masked-somatic-mutation file coverage,Aliquot Ensemble Somatic Variant Merging and Masking,490,134,149,2026-07-24

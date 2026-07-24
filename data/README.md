@@ -9,6 +9,9 @@ Processed inputs retained from the submission workspace:
   LUSC) and GCST004748 (overall-lung-cancer sensitivity).
 - GSE148071 selected cell-level score table used for threshold sensitivity.
 - TCGA-LUSC selected expression modules.
+- GDC masked-somatic-mutation coverage and canonical HIGH/MODERATE
+  KEAP1/NFE2L2/CUL3 event status for 490 TCGA-LUSC cases, with event-level
+  and query-provenance tables.
 - PARK7 colocalization prior-sensitivity and locus-comparison tables.
 - Primary Visium spot-level score and coordinate table used for revised Fig. 4.
 
@@ -27,7 +30,12 @@ Reported major-revision outputs:
   permutation sensitivities.
 - Spatial platform, sample, unit, preprocessing, and coordinate specifications.
 - Single-cell threshold sensitivities.
-- TCGA-LUSC Cox-model summaries.
+- The complete retained 38-pair MR source table. This table is the available
+  subset, not a reconstructable complete discovery universe.
+- Spatial platform feature-coverage audit confirming that PARK7 was absent
+  from both the Visium and CosMx panels used in the manuscript.
+- TCGA-LUSC PARK7 RNA and DJ-1 RPPA Cox-model summaries, RNA-protein
+  correlation, and pathway-mutation coverage summaries.
 - De-identified IHC H-score summaries.
 
 Exploratory network files retained in repository history are provenance

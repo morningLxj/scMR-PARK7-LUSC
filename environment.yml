@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.10
+  - h5py>=3.11
   - lifelines>=0.29
   - matplotlib>=3.8
   - numpy>=1.26

@@ -1,0 +1,3 @@
+resource,sample_scope,feature_count,analysis_unit_count,analysis_unit,PARK7_measured,CD79A_measured,MS4A1_measured,CD74_measured,CD37_measured,SOD1_measured,GPX1_measured,NFE2L2_measured
+10x Visium CytAssist FFPE LUSC,One public LUSC section,18085,3858,under-tissue spots,False,True,True,True,True,True,False,True
+CosMx SMI NSCLC 960-gene panel,Lung6;Lung9_Rep2;Lung12;Lung13;Lung5_Rep3,960,501403,matched segmented cells across five LUSC samples,False,True,True,True,True,True,True,False
