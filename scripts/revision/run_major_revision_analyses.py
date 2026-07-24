@@ -321,6 +321,207 @@ def run_cosmx_sensitivity() -> None:
     )
 
 
+def block_permutation_summary(
+    frame: pd.DataFrame,
+    b_high: np.ndarray,
+    a_high: np.ndarray,
+    block_width: int,
+    n_permutations: int,
+    seed: int,
+) -> dict[str, float]:
+    block_row = (frame["array_row"].to_numpy(int) // block_width).astype(int)
+    block_col = (frame["array_col"].to_numpy(int) // block_width).astype(int)
+    block_ids = np.char.add(
+        np.char.add(block_row.astype(str), "_"), block_col.astype(str)
+    )
+    rng = np.random.default_rng(seed)
+    null_overlap = np.zeros(n_permutations, dtype=np.int32)
+    expected = 0.0
+    for block_id in np.unique(block_ids):
+        mask = block_ids == block_id
+        n_block = int(mask.sum())
+        b_count = int(b_high[mask].sum())
+        a_count = int(a_high[mask].sum())
+        if not n_block or not b_count or not a_count:
+            continue
+        expected += b_count * a_count / n_block
+        null_overlap += rng.hypergeometric(
+            ngood=a_count,
+            nbad=n_block - a_count,
+            nsample=b_count,
+            size=n_permutations,
+        )
+    observed = int(np.logical_and(b_high, a_high).sum())
+    return {
+        f"block_{block_width}_expected_overlap": expected,
+        f"block_{block_width}_p_lower_or_equal": (
+            1 + int((null_overlap <= observed).sum())
+        )
+        / (n_permutations + 1),
+        f"block_{block_width}_p_upper_or_equal": (
+            1 + int((null_overlap >= observed).sum())
+        )
+        / (n_permutations + 1),
+    }
+
+
+def run_visium_threshold_permutation() -> None:
+    frame = pd.read_csv(
+        SOURCE_ROOT / "Visium_Spatial_CoLocalization_Scores.csv"
+    )
+    required = {
+        "array_row",
+        "array_col",
+        "B_cell_density_raw",
+        "Antioxidant_raw",
+        "B_cell_density_z",
+        "Antioxidant_z",
+    }
+    missing = sorted(required.difference(frame.columns))
+    if missing:
+        raise ValueError(f"Visium input is missing columns: {missing}")
+
+    threshold_specs = [
+        ("global_q50", 0.50),
+        ("global_q75_primary", 0.75),
+        ("global_q80", 0.80),
+        ("global_q85", 0.85),
+        ("global_q90", 0.90),
+        ("z_gt_1", None),
+    ]
+    n_permutations = 100_000
+    rows = []
+    for index, (label, quantile) in enumerate(threshold_specs):
+        if quantile is None:
+            b_cutoff = 1.0
+            a_cutoff = 1.0
+            b_high = frame["B_cell_density_z"].to_numpy(float) > b_cutoff
+            a_high = frame["Antioxidant_z"].to_numpy(float) > a_cutoff
+            scale = "z score"
+        else:
+            b_cutoff = float(frame["B_cell_density_raw"].quantile(quantile))
+            a_cutoff = float(frame["Antioxidant_raw"].quantile(quantile))
+            b_high = frame["B_cell_density_raw"].to_numpy(float) > b_cutoff
+            a_high = frame["Antioxidant_raw"].to_numpy(float) > a_cutoff
+            scale = "mean log1p score"
+
+        n_spots = len(frame)
+        b_count = int(b_high.sum())
+        a_count = int(a_high.sum())
+        observed = int(np.logical_and(b_high, a_high).sum())
+        expected = b_count * a_count / n_spots
+        b_only = b_count - observed
+        a_only = a_count - observed
+        neither = n_spots - observed - b_only - a_only
+        odds_ratio, fisher_p = stats.fisher_exact(
+            [[observed, b_only], [a_only, neither]],
+            alternative="two-sided",
+        )
+        random_lower = float(
+            stats.hypergeom.cdf(observed, n_spots, a_count, b_count)
+        )
+        random_upper = float(
+            stats.hypergeom.sf(observed - 1, n_spots, a_count, b_count)
+        )
+        row = {
+            "threshold": label,
+            "score_scale": scale,
+            "quantile": quantile,
+            "strict_greater_than": True,
+            "B_cutoff": b_cutoff,
+            "antioxidant_cutoff": a_cutoff,
+            "n_spots": n_spots,
+            "B_high": b_count,
+            "antioxidant_high": a_count,
+            "both_high_observed": observed,
+            "both_high_expected_independence": expected,
+            "observed_over_expected": observed / expected if expected else np.nan,
+            "fisher_odds_ratio": odds_ratio,
+            "fisher_two_sided_p": fisher_p,
+            "unrestricted_permutation_p_lower_or_equal": random_lower,
+            "unrestricted_permutation_p_upper_or_equal": random_upper,
+            "permutations_per_block_width": n_permutations,
+        }
+        for block_width in (8, 12, 16):
+            row.update(
+                block_permutation_summary(
+                    frame,
+                    b_high,
+                    a_high,
+                    block_width=block_width,
+                    n_permutations=n_permutations,
+                    seed=20260724 + 100 * index + block_width,
+                )
+            )
+        rows.append(row)
+
+    pd.DataFrame(rows).to_csv(
+        OUT / "Visium_Threshold_BlockPermutation_Sensitivity.csv",
+        index=False,
+    )
+
+    cosmx_path = OUT / "Spatial_CosMx_CD74_Myeloid_Sensitivity.csv"
+    if cosmx_path.exists():
+        cosmx = pd.read_csv(cosmx_path)
+        specification_rows = [
+            {
+                "resource": "10x Genomics public LUSC demonstration",
+                "platform_version": "Visium CytAssist; Space Ranger 2.0.0",
+                "public_identifier": (
+                    "CytAssist_FFPE_Human_Lung_Squamous_Cell_Carcinoma"
+                ),
+                "sample_id": "One FFPE LUSC section",
+                "raw_public_units": "Not separately retained",
+                "matched_analysis_units": 3858,
+                "matched_unit_type": "under-tissue spots",
+                "retained_aggregation_units": 3858,
+                "retained_unit_type": "spots",
+                "quality_control": (
+                    "Under-tissue spots from the public Space Ranger output; "
+                    "no additional spot exclusion"
+                ),
+                "normalization": "log1p counts; score-wise z standardization",
+                "coordinate_handling": (
+                    "Space Ranger array_row/array_col; Euclidean distance in "
+                    "array-coordinate units"
+                ),
+                "analysis_level": "spot-level; no deconvolution",
+            }
+        ]
+        for record in cosmx.to_dict(orient="records"):
+            specification_rows.append(
+                {
+                    "resource": "Bruker CosMx NSCLC FFPE public dataset",
+                    "platform_version": (
+                        "CosMx SMI; release version not stated in retained files"
+                    ),
+                    "public_identifier": "Public NSCLC FFPE dataset",
+                    "sample_id": record["sample"],
+                    "raw_public_units": "Not separately retained",
+                    "matched_analysis_units": int(record["n_cells"]),
+                    "matched_unit_type": "segmented cells after metadata-expression merge",
+                    "retained_aggregation_units": int(record["n_spatial_bins"]),
+                    "retained_unit_type": "320-pixel bins with at least 16 cells",
+                    "quality_control": (
+                        "Metadata-expression inner merge; bins with fewer "
+                        "than 16 cells excluded"
+                    ),
+                    "normalization": "gene-wise log1p counts before score averaging",
+                    "coordinate_handling": (
+                        "CenterX_global_px and CenterY_global_px divided into "
+                        "320-pixel grid bins"
+                    ),
+                    "analysis_level": (
+                        "cell-level scoring followed by bin-level correlations"
+                    ),
+                }
+            )
+        pd.DataFrame(specification_rows).to_csv(
+            OUT / "Spatial_Dataset_Sample_Specification.csv",
+            index=False,
+        )
+
+
 def run_scrna_threshold_sensitivity() -> None:
     cells = pd.read_csv(
         SOURCE_ROOT / "GSE148071_LUSC_scRNA_cell_level_selected_scores.csv"
@@ -587,6 +788,56 @@ def export_coloc_posteriors() -> None:
         ]
     ].to_csv(OUT / "PARK7_Coloc_Complete_Posteriors.csv", index=False)
 
+    locus_path = SOURCE_ROOT / "PARK7_LocusCompare_Source.csv"
+    locus = pd.read_csv(locus_path) if locus_path.exists() else None
+    provenance_rows = []
+    for record in selected.to_dict(orient="records"):
+        source_available = (
+            locus is not None
+            and record["cell"] == "bin"
+            and record["histology"] == "LUSC"
+        )
+        provenance_rows.append(
+            {
+                "cell_type": (
+                    "Intermediate B cells"
+                    if record["cell"] == "bin"
+                    else "Memory B cells"
+                ),
+                "histology": record["histology"],
+                "n_shared_snps": int(record["n_shared_snps"]),
+                "regional_variant_source_available": source_available,
+                "chromosome": (
+                    int(locus["CHR"].dropna().iloc[0])
+                    if source_available
+                    else np.nan
+                ),
+                "eqtl_position_min": (
+                    int(locus["POS"].min()) if source_available else np.nan
+                ),
+                "eqtl_position_max": (
+                    int(locus["POS"].max()) if source_available else np.nan
+                ),
+                "gwas_position_min": (
+                    int(locus["pos"].min()) if source_available else np.nan
+                ),
+                "gwas_position_max": (
+                    int(locus["pos"].max()) if source_available else np.nan
+                ),
+                "genome_build_labels": "Not retained in the regional source file",
+                "boundary": (
+                    "Coordinate columns are reported as retained; no new "
+                    "cross-build regional plot was generated"
+                    if source_available
+                    else "Only derived posterior and shared-SNP count retained"
+                ),
+            }
+        )
+    pd.DataFrame(provenance_rows).to_csv(
+        OUT / "PARK7_Coloc_Region_Provenance.csv",
+        index=False,
+    )
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -599,8 +850,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--steps",
         nargs="+",
-        choices=["ld", "cosmx", "scrna", "tcga", "coloc"],
-        default=["scrna", "coloc"],
+        choices=["ld", "cosmx", "visium", "scrna", "tcga", "coloc"],
+        default=["visium", "scrna", "coloc"],
         help=(
             "Analyses to run. The default steps use inputs included in the "
             "repository; LD, CosMx, and TCGA require external resources."
@@ -621,6 +872,7 @@ def main() -> None:
     functions = {
         "ld": run_ld_audit,
         "cosmx": run_cosmx_sensitivity,
+        "visium": run_visium_threshold_permutation,
         "scrna": run_scrna_threshold_sensitivity,
         "tcga": run_tcga_survival,
         "coloc": export_coloc_posteriors,

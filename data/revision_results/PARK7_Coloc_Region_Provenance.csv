@@ -1,0 +1,5 @@
+cell_type,histology,n_shared_snps,regional_variant_source_available,chromosome,eqtl_position_min,eqtl_position_max,gwas_position_min,gwas_position_max,genome_build_labels,boundary
+Intermediate B cells,LUSC,3176,True,1.0,7014444.0,8598127.0,6954384.0,8538068.0,Not retained in the regional source file,Coordinate columns are reported as retained; no new cross-build regional plot was generated
+Intermediate B cells,LUAD,3176,False,,,,,,Not retained in the regional source file,Only derived posterior and shared-SNP count retained
+Memory B cells,LUSC,3085,False,,,,,,Not retained in the regional source file,Only derived posterior and shared-SNP count retained
+Memory B cells,LUAD,3085,False,,,,,,Not retained in the regional source file,Only derived posterior and shared-SNP count retained

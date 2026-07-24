@@ -35,6 +35,10 @@ PP1 dominated and PP4 was prior-sensitive, so a shared causal variant was not es
 ## Downstream evidence
 
 - Primary Visium: PARK7 absent; observed/expected overlap 0.73; OR 0.62; Spearman rho -0.10.
+- Visium sensitivity: observed/expected overlap remained below 1 across six
+  thresholds. For the primary cutoff, lower-tail within-block permutation P
+  was 0.011 for 8- and 12-unit blocks and below 0.00002 for 16-unit blocks;
+  significance was weaker at some alternative thresholds.
 - CosMx after CD74 exclusion and myeloid adjustment: mean partial Pearson r 0.146.
 - Single-cell: score associations changed by threshold.
 - TCGA-LUSC: PARK7 was not associated with overall survival in univariable or adjusted models.

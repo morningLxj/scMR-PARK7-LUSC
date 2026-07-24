@@ -20,7 +20,10 @@ REQUIRED = [
     "data/revision_results/MR_PARK7_LD_Pruned_Estimates.csv",
     "data/revision_results/MR_PARK7_Outcome_Provenance.csv",
     "data/revision_results/PARK7_Coloc_Complete_Posteriors.csv",
+    "data/revision_results/PARK7_Coloc_Region_Provenance.csv",
     "data/revision_results/Spatial_CosMx_CD74_Myeloid_Sensitivity.csv",
+    "data/revision_results/Spatial_Dataset_Sample_Specification.csv",
+    "data/revision_results/Visium_Threshold_BlockPermutation_Sensitivity.csv",
     "data/revision_results/scRNA_PARK7_Threshold_Sensitivity_Meta.csv",
     "data/revision_results/TCGA_LUSC_PARK7_Cox_Models.csv",
     "figures/main/Figure1_Cross_Modal_Assessment.png",
@@ -97,10 +100,52 @@ def main() -> None:
     assert len(lusc) == 2
     assert all(float(row["PP1"]) > float(row["PP4"]) for row in lusc)
 
+    coloc_region = read_rows(
+        "data/revision_results/PARK7_Coloc_Region_Provenance.csv"
+    )
+    assert len(coloc_region) == 4
+    assert sum(
+        row["regional_variant_source_available"].lower() == "true"
+        for row in coloc_region
+    ) == 1
+
     spatial = read_rows(
         "data/revision_results/Spatial_CosMx_CD74_Myeloid_Sensitivity.csv"
     )
     assert len(spatial) == 5
+
+    spatial_specification = read_rows(
+        "data/revision_results/Spatial_Dataset_Sample_Specification.csv"
+    )
+    assert len(spatial_specification) == 6
+    cosmx_specification = [
+        row for row in spatial_specification if row["resource"].startswith("Bruker")
+    ]
+    assert sum(int(row["matched_analysis_units"]) for row in cosmx_specification) == 501403
+    assert sum(
+        int(row["retained_aggregation_units"]) for row in cosmx_specification
+    ) == 16438
+
+    visium_sensitivity = read_rows(
+        "data/revision_results/Visium_Threshold_BlockPermutation_Sensitivity.csv"
+    )
+    assert len(visium_sensitivity) == 6
+    assert all(float(row["observed_over_expected"]) < 1 for row in visium_sensitivity)
+    primary_visium = [
+        row for row in visium_sensitivity
+        if row["threshold"] == "global_q75_primary"
+    ][0]
+    assert int(primary_visium["both_high_observed"]) == 126
+    assert close(
+        float(primary_visium["both_high_expected_independence"]),
+        172.962,
+        tolerance=1e-3,
+    )
+    assert close(
+        float(primary_visium["block_8_p_lower_or_equal"]),
+        0.0111,
+        tolerance=1e-3,
+    )
 
     oversized = [
         path.relative_to(ROOT).as_posix()

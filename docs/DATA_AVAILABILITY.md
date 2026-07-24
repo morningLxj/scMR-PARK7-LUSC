@@ -20,6 +20,10 @@
 - De-identified IHC H-score summaries.
 - Harmonized rs6700772 outcome associations and accession-level provenance for
   the strict-pruned primary and sensitivity estimates.
+- Visium threshold/permutation sensitivity results and a spatial
+  dataset/sample specification table.
+- The retained intermediate-B-cell LUSC regional colocalization source and a
+  four-analysis coordinate/build provenance summary.
 
 ## Not redistributed
 

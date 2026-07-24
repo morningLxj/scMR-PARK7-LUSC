@@ -20,11 +20,18 @@ Reported major-revision outputs:
 
 - LD audit and outcome-specific strict-pruned estimates.
 - Complete PP0-PP4 colocalization posteriors.
+- Colocalization regional-source coordinate and genome-build provenance
+  boundaries.
 - CD74-excluded and myeloid-adjusted CosMx sensitivities.
+- Visium alternative-threshold and spatially restricted within-block
+  permutation sensitivities.
+- Spatial platform, sample, unit, preprocessing, and coordinate specifications.
 - Single-cell threshold sensitivities.
 - TCGA-LUSC Cox-model summaries.
-- Exploratory network audits.
 - De-identified IHC H-score summaries.
+
+Exploratory network files retained in repository history are provenance
+artifacts and are not part of the revised evidence set or submission archive.
 
 The diagnostic unpruned regional estimate is retained only to document the source discrepancy. It is not an inferential result.
 

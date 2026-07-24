@@ -4,7 +4,7 @@ Code, processed inputs, revision results, and figures for:
 
 **Cross-modal assessment of PARK7 in lung squamous cell carcinoma reveals limited convergence across genetic, spatial, and tissue evidence**
 
-This repository represents the 2026-07-23 major-revision analysis state. It replaces the earlier candidate-prioritization layout.
+This repository represents the 2026-07-24 major-revision analysis state. It replaces the earlier candidate-prioritization layout.
 
 ## Main conclusion
 
@@ -22,7 +22,9 @@ Key revision findings:
   gave OR 1.124 (95% CI 0.991-1.274; P=0.069).
 - In LUSC, PP1 exceeded PP4 under the primary colocalization prior; PP4 was
   0.367-0.377.
-- The primary Visium section did not measure PARK7 and showed below-expected marker overlap.
+- The primary Visium section did not measure PARK7 and showed below-expected
+  marker overlap across six threshold definitions; within-block permutation
+  support varied with threshold and block scale.
 - Adjusted CosMx associations were weak and heterogeneous.
 - Single-cell score associations depended on threshold, TCGA-LUSC survival models were null, and IHC was descriptive.
 
@@ -61,7 +63,8 @@ Check repository integrity:
 python scripts/check_repository_integrity.py
 ```
 
-Reproduce the included-input single-cell threshold and colocalization tables:
+Reproduce the included-input Visium threshold/permutation, single-cell
+threshold, and colocalization tables:
 
 ```bash
 python scripts/revision/run_major_revision_analyses.py
