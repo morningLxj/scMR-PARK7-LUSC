@@ -72,7 +72,7 @@ def build_figure_1() -> None:
             "Contradicts independence",
         ),
         (
-            "Strict LD pruning",
+            "Stringent LD clumping",
             "rs6700772 only; LUSC OR 1.228 (95% CI 1.002–1.506; nominal P = 0.048); overall-lung-cancer sensitivity OR 1.124.",
             "Inconclusive",
         ),
@@ -116,22 +116,6 @@ def build_figure_1() -> None:
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
-    fig.suptitle(
-        "What each analysis contributes to the PARK7 assessment",
-        fontsize=13,
-        fontweight="bold",
-        y=0.98,
-    )
-    ax.text(
-        0.5,
-        0.91,
-        "The analyses address distinct questions and do not form a progressive validation chain",
-        ha="center",
-        va="center",
-        fontsize=8.5,
-        color="#4B5563",
-    )
-
     wrapped_rows = [
         [
             textwrap.fill(row[0], width=21),
@@ -146,7 +130,7 @@ def build_figure_1() -> None:
         cellLoc="left",
         colLoc="center",
         colWidths=[0.22, 0.52, 0.26],
-        bbox=[0.01, 0.09, 0.98, 0.77],
+        bbox=[0.01, 0.09, 0.98, 0.88],
     )
     table.auto_set_font_size(False)
     table.set_fontsize(7)
@@ -192,13 +176,6 @@ def build_figure_2() -> None:
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(7.2, 3.35), dpi=200, gridspec_kw={"width_ratios": [1.15, 1]}
     )
-    fig.suptitle(
-        "PARK7 regional instruments are highly correlated; strict pruning leaves one variant",
-        fontsize=11.2,
-        fontweight="bold",
-        y=1.01,
-    )
-
     im = ax1.imshow(ld, cmap="viridis", vmin=0, vmax=1, interpolation="nearest")
     ax1.set_title("A. Pairwise LD among 89 EUR-matched variants", loc="left", fontweight="bold")
     ax1.set_xlabel("Variant index")
@@ -258,7 +235,11 @@ def build_figure_2() -> None:
     ax2.set_xlim(0.90, 1.60)
     ax2.set_ylim(-0.65, 1.65)
     ax2.set_xlabel("Outcome-specific odds ratio")
-    ax2.set_title("B. Strict-pruned rs6700772 Wald ratios", loc="left", fontweight="bold")
+    ax2.set_title(
+        "B. rs6700772 Wald ratios after stringent LD clumping",
+        loc="left",
+        fontweight="bold",
+    )
     ax2.grid(axis="x", linestyle=":", alpha=0.3)
     ax2.spines["top"].set_visible(False)
     ax2.spines["right"].set_visible(False)
@@ -303,13 +284,6 @@ def build_figure_3() -> None:
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(7.2, 3.3), dpi=200, gridspec_kw={"width_ratios": [1.35, 1]}
     )
-    fig.suptitle(
-        "PARK7 colocalization is inconclusive at the primary prior and sensitive to p12",
-        fontsize=11.2,
-        fontweight="bold",
-        y=1.01,
-    )
-
     cols = ["PP0", "PP1", "PP2", "PP3", "PP4"]
     colors = ["#BDBDBD", "#56B4E9", "#009E73", "#E69F00", "#D55E00"]
     left = np.zeros(len(post))
@@ -392,13 +366,6 @@ def build_figure_4() -> None:
     )
 
     fig, axes = plt.subplots(2, 2, figsize=(7.2, 6.35), dpi=200)
-    fig.suptitle(
-        "Spatial B-cell-marker and antioxidant scores in one Visium CytAssist LUSC section",
-        fontsize=11.5,
-        fontweight="bold",
-        y=0.995,
-    )
-
     ax = axes[0, 0]
     sc1 = ax.scatter(
         data["array_col"],
@@ -509,7 +476,7 @@ def build_figure_4() -> None:
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
 
-    fig.tight_layout(rect=[0, 0, 1, 0.975])
+    fig.tight_layout()
     save_figure(fig, "Figure4_Visium_Spatial_Constraint")
 
 
